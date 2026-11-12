@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estacle | Client 360 – {{ client.full_name }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+.main-content { background: #f1f5f9; min-height: 100vh; padding-bottom: 48px; }
+.top-bar.dash-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 28px !important; background: transparent !important; border-bottom: none !important;
+  box-shadow: none; gap: 12px; flex-wrap: wrap;
+}
+.dash-top .page-title { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 2px; }
+.dash-top .page-subtitle { font-size: 13px; color: #64748b; margin: 0; }
+.top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-pill {
+  display: inline-flex; align-items: center; height: 36px; padding: 0 14px;
+  border-radius: 10px; font-size: 13px; font-weight: 600; text-decoration: none;
+  border: 1px solid #e2e8f0; background: #fff; color: #334155; font-family: inherit; cursor: pointer;
+}
+.btn-pill.primary { background: #0f172a; color: #fff; border-color: #0f172a; }
+.wrap { padding: 20px 28px; max-width: 1240px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+.hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%);
+  border-radius: 18px; padding: 22px 24px; color: #fff; margin-bottom: 18px;
+  display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
+  box-shadow: 0 12px 32px rgba(15,23,42,0.18);
+}
+.hero-avatar {
+  width: 72px; height: 72px; border-radius: 18px; background: rgba(255,255,255,0.12);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  font-size: 26px; font-weight: 800; border: 1px solid rgba(255,255,255,0.15); flex-shrink: 0;
+}
+.hero-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.hero-meta { flex: 1; min-width: 200px; }
+.hero-meta h2 { margin: 0 0 4px; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.hero-meta p { margin: 0; font-size: 13px; color: #cbd5e1; }
+.hero-meta .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+  background: rgba(255,255,255,0.1); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.08);
+}
+.chip.ok { background: rgba(34,197,94,0.2); color: #bbf7d0; }
+.chip.warn { background: rgba(249,115,22,0.25); color: #fed7aa; }
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+@media (max-width: 900px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+.stat {
+  background: #fff; border: 1px solid #e8ecf1; border-radius: 14px; padding: 14px 16px;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+}
+.stat .label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+.stat .value { font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 4px; letter-spacing: -0.02em; }
+.stat .sub { font-size: 11.5px; color: #64748b; margin-top: 2px; }
+.layout { display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
+@media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+.card {
+  background: #fff; border: 1px solid #e8ecf1; border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04); overflow: hidden; margin-bottom: 14px;
+}
+.card-hd {
+  padding: 12px 16px; border-bottom: 1px solid #f1f5f9;
+  font-size: 13px; font-weight: 700; color: #0f172a;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.card-hd .count { font-size: 11px; font-weight: 600; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 999px; }
+.card-bd { padding: 14px 16px; }
+.dl { display: grid; grid-template-columns: 110px 1fr; gap: 8px 10px; font-size: 13px; }
+.dl dt { color: #64748b; font-weight: 500; }
+.dl dd { margin: 0; color: #0f172a; font-weight: 600; word-break: break-word; }
+.badge {
+  display: inline-block; font-size: 11.5px; font-weight: 600; text-transform: capitalize;
+  padding: 2px 8px; border-radius: 999px; background: #f1f5f9; color: #475569;
+}
+.badge.closed, .badge.completed, .badge.done { background: #ecfdf5; color: #047857; }
+.badge.lead, .badge.new { background: #f0f9ff; color: #0369a1; }
+.badge.negotiation, .badge.offer, .badge.under_contract, .badge.pending { background: #fff7ed; color: #c2410c; }
+.badge.lost, .badge.cancelled { background: #fef2f2; color: #b91c1c; }
+.mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mini-table th {
+  text-align: left; font-size: 11px; font-weight: 600; color: #94a3b8;
+  text-transform: uppercase; padding: 8px 6px; border-bottom: 1px solid #f1f5f9;
+}
+.mini-table td { padding: 10px 6px; border-bottom: 1px solid #f8fafc; color: #334155; vertical-align: top; }
+.mini-table a { color: #0f172a; font-weight: 600; text-decoration: none; }
+.mini-table a:hover { color: #ea580c; }
+.empty-box {
+  text-align: center; padding: 28px 16px; color: #64748b; font-size: 13px;
+  background: #f8fafc; border: 1px dashed #e2e8f0; border-radius: 12px;
+}
+.empty-box p { margin: 0 0 12px; }
+.btn-create {
+  display: inline-flex; align-items: center; height: 36px; padding: 0 14px;
+  border-radius: 10px; font-size: 13px; font-weight: 600; text-decoration: none;
+  background: #0f172a; color: #fff; border: none; font-family: inherit;
+}
+.btn-create.orange { background: linear-gradient(135deg, #f97316, #ea580c); }
+.notes {
+  white-space: pre-wrap; font-size: 13px; color: #334155; line-height: 1.55;
+  background: #f8fafc; border-radius: 10px; padding: 12px;
+}
+.timeline { list-style: none; margin: 0; padding: 0; }
+.timeline li { position: relative; padding: 0 0 16px 18px; border-left: 2px solid #e2e8f0; }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li::before {
+  content: ''; position: absolute; left: -5px; top: 4px;
+  width: 8px; height: 8px; border-radius: 50%; background: #f97316; box-shadow: 0 0 0 3px #fff;
+}
+.timeline .when { font-size: 11px; color: #94a3b8; margin-bottom: 2px; }
+.timeline .what { font-size: 13px; color: #0f172a; font-weight: 600; }
+.timeline .who { font-size: 12px; color: #64748b; }
+.tabs {
+  display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px;
+  background: #fff; border: 1px solid #e8ecf1; border-radius: 12px; padding: 6px;
+}
+.tabs button {
+  border: none; background: transparent; height: 34px; padding: 0 14px;
+  border-radius: 8px; font-size: 13px; font-weight: 600; color: #64748b;
+  cursor: pointer; font-family: inherit;
+}
+.tabs button.active { background: #0f172a; color: #fff; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* Centered adaptive layout (works expanded + minimized sidebar) */
+.wrap {
+  padding: 20px 28px;
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+.top-bar.dash-top {
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+body.sidebar-collapsed .main-content {
+  width: calc(100% - 76px) !important;
+  margin-left: 76px !important;
+}
+body.sidebar-collapsed .wrap,
+body.sidebar-collapsed .top-bar.dash-top {
+  max-width: 1240px;
+  margin-left: auto;
+  margin-right: auto;
+}
+body.sidebar-collapsed .layout {
+  grid-template-columns: 280px 1fr;
+}
+@media (max-width: 1100px) {
+  body.sidebar-collapsed .layout { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app-layout">
+{% set active = 'clients' %}
+{% include 'partials/admin_sidebar.html' %}
+<main class="main-content">
+<header class="top-bar dash-top">
+  <div>
+    <h1 class="page-title">Client 360</h1>
+    <p class="page-subtitle">{{ client.full_name }} · #{{ client.id }}</p>
+  </div>
+  <div class="top-actions">
+    <a href="{{ url_for('admin.admin_clients') }}" class="btn-pill">← Clients</a>
+    <a href="{{ url_for('admin.admin_edit_client', client_id=client.id) }}" class="btn-pill primary">Edit</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-avatar">
+      {% if client.photo %}
+      <img src="{{ client.photo }}" alt="{{ client.full_name }}">
+      {% else %}
+      {{ (client.full_name or '?')[0]|upper }}
+      {% endif %}
+    </div>
+    <div class="hero-meta">
+      <h2>{{ client.full_name }}</h2>
+      <p>
+        {% if client.email %}{{ client.email }}{% endif %}
+        {% if client.email and client.phone %} · {% endif %}
+        {% if client.phone %}{{ client.phone }}{% endif %}
+      </p>
+      <div class="chips">
+        <span class="chip">Status: {{ client.status or '—' }}</span>
+        {% if client.agent_name %}<span class="chip">Agent: {{ client.agent_name }}</span>{% endif %}
+        {% if client.preferred_city %}<span class="chip">City: {{ client.preferred_city }}</span>{% endif %}
+        {% if client.budget %}<span class="chip warn">Budget: {{ format_money(client.budget, currency) }}</span>{% endif %}
+        {% if client.user_id %}<span class="chip ok">Portal login active</span>{% else %}<span class="chip">No portal login</span>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat"><div class="label">Open deals</div><div class="value">{{ stats.open_deals }}</div><div class="sub">{{ format_money(stats.pipeline_value, currency) }} pipeline</div></div>
+    <div class="stat"><div class="label">Closed deals</div><div class="value">{{ stats.closed_deals }}</div><div class="sub">{{ format_money(stats.closed_value, currency) }} closed</div></div>
+    <div class="stat"><div class="label">Properties</div><div class="value">{{ stats.properties }}</div><div class="sub">Interested / linked</div></div>
+    <div class="stat"><div class="label">Appointments</div><div class="value">{{ appointments|length }}</div><div class="sub">{{ stats.upcoming_appts }} upcoming</div></div>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="card">
+        <div class="card-hd">Profile</div>
+        <div class="card-bd">
+          <dl class="dl">
+            <dt>Status</dt><dd><span class="badge {{ client.status }}">{{ client.status or '—' }}</span></dd>
+            <dt>Email</dt><dd>{{ client.email or '—' }}</dd>
+            <dt>Phone</dt><dd>{{ client.phone or '—' }}</dd>
+            <dt>Address</dt><dd>{{ client.address or '—' }}</dd>
+            <dt>Source</dt><dd>{{ client.source or '—' }}</dd>
+            <dt>Interest</dt><dd>{{ client.interest or '—' }}</dd>
+            <dt>City</dt><dd>{{ client.preferred_city or '—' }}</dd>
+            <dt>Budget</dt><dd>{% if client.budget %}{{ format_money(client.budget, currency) }}{% else %}—{% endif %}</dd>
+            <dt>Agent</dt><dd>{{ client.agent_name or 'Unassigned' }}</dd>
+            <dt>Login</dt><dd>{% if client.user_id %}<span class="badge closed">Active</span> {{ client.login_email or '' }}{% else %}None{% endif %}</dd>
+            <dt>Created</dt><dd>{{ (client.created_at|string)[:16] if client.created_at else '—' }}</dd>
+          </dl>
+          {% if client.notes %}
+          <p style="margin:14px 0 6px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em">Notes</p>
+          <div class="notes">{{ client.notes }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">Activity <span class="count">{{ activity|length }}</span></div>
+        <div class="card-bd">
+          {% if activity %}
+          <ul class="timeline">
+            {% for a in activity %}
+            <li>
+              <div class="when">{{ (a.created_at|string)[:16] if a.created_at else '—' }}</div>
+              <div class="what">{{ a.action }}{% if a.entity_type %} · {{ a.entity_type }}{% endif %}</div>
+              <div class="who">{% if a.actor_name %}{{ a.actor_name }}{% else %}System{% endif %}{% if a.details %} — {{ a.details|truncate(80) }}{% endif %}</div>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p style="color:#94a3b8;font-size:13px;margin:0">No activity logged yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="tabs" id="c360-tabs">
+        <button type="button" class="active" data-tab="deals">Deals ({{ deals|length }})</button>
+        <button type="button" data-tab="properties">Properties ({{ interested|length }})</button>
+        <button type="button" data-tab="appointments">Appointments ({{ appointments|length }})</button>
+      </div>
+
+      <div class="tab-pane active" id="tab-deals">
+        <div class="card">
+          <div class="card-hd">
+            <span>Deals pipeline</span>
+            <a href="{{ url_for('admin.admin_add_deal') }}?client_id={{ client.id }}" class="btn-pill primary" style="height:30px;padding:0 10px;font-size:12px">+ Create deal</a>
+          </div>
+          <div class="card-bd">
+            {% if deals %}
+            <table class="mini-table">
+              <thead><tr><th>Title</th><th>Stage</th><th>Value</th><th>Property</th><th>Agent</th></tr></thead>
+              <tbody>
+              {% for d in deals %}
+              <tr>
+                <td><a href="{{ url_for('admin.admin_deal_detail', deal_id=d.id) }}">{{ d.title }}</a></td>
+                <td><span class="badge {{ d.stage }}">{{ d.stage or '—' }}</span></td>
+                <td>{{ format_money(d.value, currency) if d.value else '—' }}</td>
+                <td>{{ d.property_title or '—' }}</td>
+                <td>{{ d.agent_name or '—' }}</td>
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+            {% else %}
+            <div class="empty-box">
+              <p>No deals linked to this client yet.</p>
+              <a class="btn-create" href="{{ url_for('admin.admin_add_deal') }}?client_id={{ client.id }}">Create deal</a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="tab-properties">
+        <div class="card">
+          <div class="card-hd">
+            <span>Interested properties</span>
+            <a href="{{ url_for('admin.admin_edit_client', client_id=client.id) }}" class="btn-pill primary" style="height:30px;padding:0 10px;font-size:12px">+ Link properties</a>
+          </div>
+          <div class="card-bd">
+            {% if interested %}
+            <table class="mini-table">
+              <thead><tr><th>Title</th><th>Type</th><th>City</th><th>Price</th><th>Status</th></tr></thead>
+              <tbody>
+              {% for p in interested %}
+              <tr>
+                <td><a href="{{ url_for('admin.admin_property_detail', prop_id=p.id) }}">{{ p.title }}</a></td>
+                <td>{{ p.property_type or p.listing_type or '—' }}</td>
+                <td>{{ p.city or '—' }}</td>
+                <td>{% if p.price %}{{ format_money(p.price, currency) }}{% else %}—{% endif %}</td>
+                <td><span class="badge {{ p.status }}">{{ p.status or '—' }}</span></td>
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+            {% else %}
+            <div class="empty-box">
+              <p>No properties linked to this client.</p>
+              <a class="btn-create" href="{{ url_for('admin.admin_edit_client', client_id=client.id) }}">Add properties</a>
+              <span style="display:inline-block;width:8px"></span>
+              <a class="btn-create orange" href="{{ url_for('admin.admin_add_property') }}">Create property</a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="tab-appointments">
+        <div class="card">
+          <div class="card-hd">
+            <span>Appointments / viewings</span>
+            <a href="{{ url_for('admin.admin_add_appointment') }}?client_id={{ client.id }}" class="btn-pill primary" style="height:30px;padding:0 10px;font-size:12px">Schedule appointment</a>
+          </div>
+          <div class="card-bd">
+            {% if appointments %}
+            <table class="mini-table">
+              <thead><tr><th>Date</th><th>Property</th><th>Agent</th><th>Status</th><th>Notes</th></tr></thead>
+              <tbody>
+              {% for a in appointments %}
+              <tr>
+                <td>{{ (a.appointment_date|string)[:16] if a.appointment_date else '—' }}</td>
+                <td>{{ a.property_title or '—' }}</td>
+                <td>{{ a.agent_name or '—' }}</td>
+                <td><span class="badge {{ a.status }}">{{ a.status or '—' }}</span></td>
+                <td>{{ (a.notes or '—')|truncate(60) }}</td>
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+            {% else %}
+            <div class="empty-box">
+              <p>No appointments scheduled for this client.</p>
+              <a class="btn-create" href="{{ url_for('admin.admin_add_appointment') }}?client_id={{ client.id }}">Schedule appointment</a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:4px">
+        <div class="card-hd">
+          <span>About The Client</span>
+          <a href="{{ url_for('admin.admin_edit_client', client_id=client.id) }}" class="btn-pill" style="height:30px;padding:0 10px;font-size:12px">Edit</a>
+        </div>
+        <div class="card-bd">
+          {% if client.about_the_client %}
+          <div class="notes">{{ client.about_the_client }}</div>
+          {% else %}
+          <div class="empty-box">
+            <p>No description yet. Add anything important about this client.</p>
+            <a class="btn-create" href="{{ url_for('admin.admin_edit_client', client_id=client.id) }}">Add about the client</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</main>
+</div>
+<script>
+(function(){
+  var tabs = document.getElementById('c360-tabs');
+  if (!tabs) return;
+  tabs.addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-tab]');
+    if (!btn) return;
+    tabs.querySelectorAll('button').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    var id = btn.getAttribute('data-tab');
+    document.querySelectorAll('.tab-pane').forEach(function(p){
+      p.classList.toggle('active', p.id === 'tab-' + id);
+    });
+  });
+})();
+</script>
+</body>
+</html>

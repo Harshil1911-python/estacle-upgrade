@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estacle | Admin – Settings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <style>
+      .ai-settings-card {
+        border: 1px solid #e8ecf1; border-radius: 14px; padding: 18px 20px;
+        background: linear-gradient(180deg, #fafbfc 0%, #fff 40%);
+      }
+      .ai-settings-card .ai-head {
+        display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+        margin-bottom: 14px;
+      }
+      .ai-settings-card .ai-head h3 {
+        margin: 0 0 4px; font-size: 15px; font-weight: 700; color: #0f172a;
+      }
+      .ai-settings-card .ai-head p { margin: 0; font-size: 12.5px; color: #64748b; }
+      .key-status {
+        font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+      }
+      .key-status.on { background: #ecfdf5; color: #047857; }
+      .key-status.off { background: #f1f5f9; color: #64748b; }
+      .ai-settings-card .form-hint { font-size: 12px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    {% set active = 'settings' %}
+    {% include 'partials/admin_sidebar.html' %}
+    <main class="main-content">
+        <header class="top-bar">
+            <div>
+                <h1 class="page-title">Settings</h1>
+                <p class="page-subtitle">Platform configuration</p>
+            </div>
+        </header>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}{% for category, message in messages %}<div class="alert alert-{{ category }}">{{ message }}</div>{% endfor %}{% endif %}
+        {% endwith %}
+
+        <div class="panel form-panel">
+            <form method="POST" class="admin-form">
+                <input type="hidden" name="section" value="general">
+                <div class="form-section-title">Currency</div>
+                <div class="form-group">
+                    <label>Default currency</label>
+                    <select name="currency">
+                        <option value="USD" {% if currency == 'USD' %}selected{% endif %}>USD – US Dollar ($)</option>
+                        <option value="INR" {% if currency == 'INR' %}selected{% endif %}>INR – Indian Rupee (₹)</option>
+                        <option value="AED" {% if currency == 'AED' %}selected{% endif %}>AED – UAE Dirham</option>
+                    </select>
+                    <span class="form-hint">Used for all prices across admin and client portal</span>
+                </div>
+
+                <div class="form-section-title">Company</div>
+                <div class="form-group"><label>Company name</label><input name="company_name" value="{{ company_name }}"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Support email</label><input type="email" name="support_email" value="{{ support_email }}"></div>
+                    <div class="form-group"><label>Support phone</label><input name="support_phone" value="{{ support_phone }}"></div>
+                </div>
+                <div class="form-group"><label>Office address</label><input name="address" value="{{ address }}" placeholder="Street, city"></div>
+                <div class="form-group"><label>Timezone</label>
+                    <select name="timezone">
+                        {% for tz in ['Asia/Kolkata', 'Asia/Dubai', 'UTC', 'America/New_York', 'Europe/London'] %}
+                        <option value="{{ tz }}" {% if timezone == tz %}selected{% endif %}>{{ tz }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Appearance</label>
+                    <select name="theme_mode">
+                        <option value="default" {% if theme_mode not in ['dawn','slate','sand','midnight'] %}selected{% endif %}>Default</option>
+                        <option value="dawn" {% if theme_mode == 'dawn' %}selected{% endif %}>Dawn — soft gray workspace</option>
+                        <option value="slate" {% if theme_mode == 'slate' %}selected{% endif %}>Slate — cool professional</option>
+                        <option value="sand" {% if theme_mode == 'sand' %}selected{% endif %}>Sand — warm neutral</option>
+                        <option value="midnight" {% if theme_mode == 'midnight' %}selected{% endif %}>Midnight — low-light focus</option>
+                    </select>
+                    <span class="form-hint">Appearance applies across admin screens</span>
+                </div>
+                <button type="submit" class="btn-primary">Save settings</button>
+            </form>
+        </div>
+
+        <!-- Estacle AI / Groq -->
+        <div class="panel form-panel" id="serenia-ai" style="margin-top:0">
+            <div class="ai-settings-card">
+                <div class="ai-head">
+                    <div>
+                        <h3>Serenia AI</h3>
+                        <p>Connect your Groq API key to enable natural-language CRM operations. Keys are encrypted and never shown in full.</p>
+                    </div>
+                    {% if ai_has_key %}
+                    <span class="key-status on">Key on file · {{ ai_key_mask }}</span>
+                    {% else %}
+                    <span class="key-status off">No key</span>
+                    {% endif %}
+                </div>
+                <form method="POST" class="admin-form" style="margin:0">
+                    <input type="hidden" name="section" value="ai">
+                    <div class="form-group">
+                        <label>Groq API key</label>
+                        <input type="password" name="groq_api_key" placeholder="{% if ai_has_key %}Leave blank to keep current key{% else %}gsk_…{% endif %}" autocomplete="off">
+                        <span class="form-hint">Create a key at console.groq.com · stored encrypted per admin user</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Model</label>
+                        <select name="ai_model">
+                            <option value="openai/gpt-oss-20b" {% if ai_model == 'openai/gpt-oss-20b' %}selected{% endif %}>openai/gpt-oss-20b</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                        <button type="submit" class="btn-primary">Save Serenia AI settings</button>
+                        {% if ai_has_key %}
+                        <button type="submit" name="clear_api_key" value="1" class="btn-secondary" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #fecaca;background:#fef2f2;color:#b91c1c;font-weight:600;cursor:pointer"
+                          onclick="return confirm('Remove saved Groq API key?');">Remove key</button>
+                        {% endif %}
+                        <a href="{{ url_for('admin.admin_ai') }}" class="btn-secondary" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;color:#334155;font-weight:600;text-decoration:none;display:inline-flex;align-items:center">Open Serenia AI</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        
+        <div class="panel form-panel" id="serenia-prompts" style="margin-top:0">
+            <div class="ai-settings-card">
+                <div class="ai-head">
+                    <div>
+                        <h3>Prompt library</h3>
+                        <p>These prompts appear when users click Prompt library in Serenia AI.</p>
+                    </div>
+                </div>
+                <form method="POST" class="admin-form" style="margin:0" action="{{ url_for('admin.admin_settings_prompt') }}">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" name="title" placeholder="CRM summary" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Prompt text</label>
+                        <textarea name="text" rows="3" placeholder="Analyse my CRM and give a clear summary" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Add prompt</button>
+                </form>
+                {% if ai_prompts %}
+                <div style="margin-top:16px">
+                    <table>
+                        <thead><tr><th>Title</th><th>Prompt</th><th></th></tr></thead>
+                        <tbody>
+                        {% for pr in ai_prompts %}
+                        <tr>
+                            <td>{{ pr.title }}</td>
+                            <td style="max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pr.text }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.admin_settings_prompt_delete', prompt_id=pr.id) }}" style="margin:0"
+                                      onsubmit="return confirm('Remove this prompt?');">
+                                    <button type="submit" class="btn-secondary" style="height:32px;padding:0 10px;font-size:12px;color:#b91c1c">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="form-hint" style="margin-top:12px">No custom prompts yet. Defaults are used in chat until you add some.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="panel form-panel" id="serenia-rag" style="margin-top:0">
+            <div class="ai-settings-card">
+                <div class="ai-head">
+                    <div>
+                        <h3>Company knowledge (RAG)</h3>
+                        <p>Upload text or PDF documents. Serenia AI uses them when answering company questions.</p>
+                    </div>
+                </div>
+                <form method="POST" enctype="multipart/form-data" class="admin-form" style="margin:0" action="{{ url_for('admin.admin_settings_knowledge') }}">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" name="title" placeholder="Policy handbook">
+                    </div>
+                    <div class="form-group">
+                        <label>Paste text</label>
+                        <textarea name="content" rows="5" placeholder="Paste document text"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Or upload file (.txt, .md, .csv, .pdf)</label>
+                        <input type="file" name="file" accept=".txt,.md,.csv,.pdf,text/plain,application/pdf">
+                    </div>
+                    <button type="submit" class="btn-primary">Add to knowledge</button>
+                </form>
+                {% if knowledge_docs %}
+                <div style="margin-top:16px">
+                    <table>
+                        <thead><tr><th>Title</th><th>Size</th><th></th></tr></thead>
+                        <tbody>
+                        {% for d in knowledge_docs %}
+                        <tr>
+                            <td>{{ d.title }}</td>
+                            <td>{{ d.chars }} chars</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.admin_settings_knowledge_delete', doc_id=d.id) }}" style="margin:0"
+                                      onsubmit="return confirm('Remove this document?');">
+                                    <button type="submit" class="btn-secondary" style="height:32px;padding:0 10px;font-size:12px;color:#b91c1c">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="form-hint" style="margin-top:12px">No knowledge documents yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="panel form-panel" style="margin-top:0">
+            <div class="form-section-title">Demo logins</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Role</th><th>Email</th><th>Password</th></tr></thead>
+                    <tbody>
+                        <tr><td><span class="badge badge-admin">Admin</span></td><td>admin@estacle.com</td><td>admin123</td></tr>
+                        <tr><td><span class="badge badge-agent">Agent</span></td><td>agent@estacle.com</td><td>agent123</td></tr>
+                        <tr><td><span class="badge badge-customer">Customer</span></td><td>customer@estacle.com</td><td>customer123</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<script>
+(function(){
+  var sel = document.querySelector('select[name="theme_mode"]');
+  if (!sel) return;
+  document.querySelectorAll('form').forEach(function(f){
+    f.addEventListener('submit', function(){
+      try { localStorage.setItem('estacle_theme', sel.value || 'default'); } catch(e) {}
+    });
+  });
+  try { localStorage.setItem('estacle_theme', sel.value || 'default'); } catch(e) {}
+  ['theme-dawn','theme-slate','theme-sand','theme-midnight'].forEach(function(c){
+    document.body.classList.remove(c); document.documentElement.classList.remove(c);
+  });
+  var v = sel.value || 'default';
+  if (v && v !== 'default') {
+    document.body.classList.add('theme-' + v);
+    document.documentElement.classList.add('theme-' + v);
+  }
+})();
+</script>
+</body>
+</html>
