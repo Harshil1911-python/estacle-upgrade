@@ -325,13 +325,35 @@ def migrate_db():
         )
     """)
 
-    # Appointment minutes of meeting
+    # Appointment minutes of meeting + premium scheduling fields
     apcols = {r[1] for r in db.execute('PRAGMA table_info(appointments)').fetchall()}
     if 'minutes_of_meeting' not in apcols:
         try:
             db.execute('ALTER TABLE appointments ADD COLUMN minutes_of_meeting TEXT')
         except Exception:
             pass
+    for name, typedef in [
+        ('appointment_type', "TEXT DEFAULT 'meeting'"),
+        ('duration_minutes', 'INTEGER DEFAULT 60'),
+        ('updated_at', 'TIMESTAMP'),
+    ]:
+        if name not in apcols:
+            try:
+                db.execute(f'ALTER TABLE appointments ADD COLUMN {name} {typedef}')
+            except Exception:
+                pass
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS appointment_activity (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            appointment_id INTEGER NOT NULL,
+            user_id INTEGER,
+            action TEXT NOT NULL,
+            details TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (appointment_id) REFERENCES appointments (id),
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
 
     db.execute("""
         CREATE TABLE IF NOT EXISTS deal_payments (

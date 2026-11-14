@@ -2,7 +2,7 @@
 
 from flask import (
     render_template, request, redirect, url_for, session, flash,
-    current_app, make_response
+    current_app, make_response, jsonify
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -20,6 +20,52 @@ from core.helpers import (
 from routes.admin import admin
 from routes.admin.common import PROPERTY_IMPORT_FORMAT
 
+def reconcile_property_statuses(db):
+    """
+    Keep every property.status aligned with its deals:
+      - closed deal  → sold (or rented if listing_type is rent)
+      - active deal (offer / negotiation / under_contract) → under_offer
+      - no deal (or only lost) → available
+    Closed takes priority over under_offer.
+    """
+    try:
+        props = db.execute("SELECT id, listing_type, status FROM properties").fetchall()
+    except Exception:
+        return
+    for prop in props:
+        pid = prop["id"]
+        listing = (prop["listing_type"] or "sale").strip().lower()
+        # Prefer a closed deal if any
+        closed = db.execute(
+            "SELECT id FROM deals WHERE property_id = ? AND lower(IFNULL(stage,'')) = 'closed' "
+            "ORDER BY updated_at DESC LIMIT 1",
+            (pid,),
+        ).fetchone()
+        if closed:
+            target = "rented" if listing in ("rent", "rental", "lease") else "sold"
+            if (prop["status"] or "") != target:
+                db.execute("UPDATE properties SET status = ? WHERE id = ?", (target, pid))
+            continue
+        active = db.execute(
+            "SELECT id FROM deals WHERE property_id = ? "
+            "AND lower(IFNULL(stage,'')) IN ('offer','negotiation','under_contract') "
+            "ORDER BY updated_at DESC LIMIT 1",
+            (pid,),
+        ).fetchone()
+        if active:
+            if (prop["status"] or "") != "under_offer":
+                db.execute("UPDATE properties SET status = 'under_offer' WHERE id = ?", (pid,))
+            continue
+        # No active/closed deal → available
+        if (prop["status"] or "") != "available":
+            db.execute("UPDATE properties SET status = 'available' WHERE id = ?", (pid,))
+    try:
+        db.commit()
+    except Exception:
+        pass
+
+
+
 
 @admin.route('/admin/properties')
 @login_required
@@ -27,21 +73,7 @@ from routes.admin.common import PROPERTY_IMPORT_FORMAT
 def admin_properties():
     db = get_db()
     migrate_db()
-    # Reconcile: closed deals → property sold (keeps list in sync with dashboard)
-    try:
-        db.execute(
-            "UPDATE properties SET status = 'sold' WHERE id IN ("
-            "SELECT property_id FROM deals WHERE stage = 'closed' AND property_id IS NOT NULL"
-            ") AND IFNULL(status, '') != 'sold'"
-        )
-        db.execute(
-            "UPDATE properties SET status = 'under_offer' WHERE id IN ("
-            "SELECT property_id FROM deals WHERE stage IN ('offer','negotiation','under_contract') AND property_id IS NOT NULL"
-            ") AND IFNULL(status, '') = 'available'"
-        )
-        db.commit()
-    except Exception:
-        pass
+    reconcile_property_statuses(db)
     q = request.args.get('q', '').strip()
     status_filter = request.args.get('status', '').strip()
     listing_type = request.args.get('listing_type', '').strip()
@@ -487,15 +519,19 @@ def admin_update_property_status(prop_id):
 @login_required
 @role_required('admin')
 def admin_property_detail(prop_id):
+    """Property 360 — full relationship view like Client 360."""
     db = get_db()
     migrate_db()
+    reconcile_property_statuses(db)
     prop = db.execute(
-        "SELECT p.*, u.full_name as agent_name FROM properties p LEFT JOIN users u ON p.agent_id = u.id WHERE p.id = ?",
+        "SELECT p.*, u.full_name as agent_name, u.email as agent_email, u.phone as agent_phone "
+        "FROM properties p LEFT JOIN users u ON p.agent_id = u.id WHERE p.id = ?",
         (prop_id,)
     ).fetchone()
     if not prop:
         flash('Property not found.', 'danger')
         return redirect(url_for('admin.admin_properties'))
+
     photos = []
     if prop['photos']:
         photos = [p.strip() for p in prop['photos'].split(',') if p.strip()]
@@ -505,12 +541,194 @@ def admin_property_detail(prop_id):
             videos = [v.strip() for v in prop['videos'].split(',') if v.strip()]
     except (KeyError, IndexError, TypeError):
         videos = []
-    currency = get_setting('currency', 'INR')
-    return render_template(
-        'admin_property_detail.html', prop=prop, photos=photos, videos=videos,
-        currency=currency, format_money=format_money
+
+    deals = db.execute(
+        """SELECT d.*, c.full_name as client_name, ag.full_name as agent_name
+           FROM deals d
+           LEFT JOIN clients c ON d.client_id = c.id
+           LEFT JOIN users ag ON d.agent_id = ag.id
+           WHERE d.property_id = ?
+           ORDER BY d.updated_at DESC, d.created_at DESC LIMIT 50""",
+        (prop_id,),
+    ).fetchall()
+
+    appointments = db.execute(
+        """SELECT a.*, c.full_name as client_name, ag.full_name as agent_name
+           FROM appointments a
+           LEFT JOIN clients c ON a.client_id = c.id
+           LEFT JOIN users ag ON a.agent_id = ag.id
+           WHERE a.property_id = ?
+           ORDER BY a.appointment_date DESC LIMIT 50""",
+        (prop_id,),
+    ).fetchall()
+
+    tasks = db.execute(
+        """SELECT t.*, u.full_name as assignee_name
+           FROM tasks t
+           LEFT JOIN users u ON t.assigned_to = u.id
+           WHERE t.related_property_id = ?
+           ORDER BY
+             CASE WHEN t.status = 'pending' THEN 0 WHEN t.status = 'in_progress' THEN 1 ELSE 2 END,
+             t.due_date IS NULL, t.due_date ASC
+           LIMIT 50""",
+        (prop_id,),
+    ).fetchall()
+
+    inquiries = []
+    try:
+        inquiries = db.execute(
+            """SELECT i.*, u.full_name as user_name
+               FROM inquiries i
+               LEFT JOIN users u ON i.user_id = u.id
+               WHERE i.property_id = ?
+               ORDER BY i.created_at DESC LIMIT 50""",
+            (prop_id,),
+        ).fetchall()
+    except Exception:
+        pass
+
+    clients = db.execute(
+        """SELECT DISTINCT c.id, c.full_name, c.email, c.phone, c.status, c.budget
+           FROM clients c
+           WHERE c.id IN (
+             SELECT client_id FROM deals WHERE property_id = ? AND client_id IS NOT NULL
+             UNION
+             SELECT client_id FROM appointments WHERE property_id = ? AND client_id IS NOT NULL
+             UNION
+             SELECT client_id FROM client_properties WHERE property_id = ?
+           )
+           ORDER BY c.full_name""",
+        (prop_id, prop_id, prop_id),
+    ).fetchall()
+
+    activity = db.execute(
+        """SELECT a.*, u.full_name as actor_name
+           FROM activity_log a
+           LEFT JOIN users u ON a.user_id = u.id
+           WHERE (a.entity_type = 'property' AND a.entity_id = ?)
+              OR (a.details LIKE ?)
+           ORDER BY a.created_at DESC LIMIT 40""",
+        (prop_id, '%' + str(prop_id) + '%'),
+    ).fetchall()
+
+    open_deals = sum(1 for d in deals if (d['stage'] or '') not in ('closed', 'lost'))
+    closed_deals = sum(1 for d in deals if (d['stage'] or '') == 'closed')
+    pipeline_value = sum(float(d['value'] or 0) for d in deals if (d['stage'] or '') not in ('closed', 'lost'))
+    closed_value = sum(float(d['value'] or 0) for d in deals if (d['stage'] or '') == 'closed')
+    upcoming_appts = sum(
+        1 for a in appointments
+        if a['appointment_date'] and str(a['appointment_date'])[:10] >= datetime.now().strftime('%Y-%m-%d')
+        and (a['status'] or '') not in ('cancelled', 'completed', 'done', 'no_show')
     )
 
+    # Active deal for status chip
+    active_deal = next((d for d in deals if (d['stage'] or '') not in ('closed', 'lost')), None)
+    closed_deal = next((d for d in deals if (d['stage'] or '') == 'closed'), None)
+
+    currency = get_setting('currency', 'INR')
+    return render_template(
+        'admin_property_detail.html',
+        prop=prop,
+        photos=photos,
+        videos=videos,
+        deals=deals,
+        appointments=appointments,
+        tasks=tasks,
+        inquiries=inquiries,
+        clients=clients,
+        activity=activity,
+        active_deal=active_deal,
+        closed_deal=closed_deal,
+        stats={
+            'open_deals': open_deals,
+            'closed_deals': closed_deals,
+            'pipeline_value': pipeline_value,
+            'closed_value': closed_value,
+            'upcoming_appts': upcoming_appts,
+            'clients': len(clients),
+            'inquiries': len(inquiries),
+            'tasks': len(tasks),
+        },
+        currency=currency,
+        format_money=format_money,
+    )
+
+
+
+
+@admin.route('/admin/properties/<int:prop_id>/about', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_property_about(prop_id):
+    db = get_db()
+    migrate_db()
+    prop = db.execute('SELECT id FROM properties WHERE id = ?', (prop_id,)).fetchone()
+    if not prop:
+        flash('Property not found.', 'danger')
+        return redirect(url_for('admin.admin_properties'))
+    description = (request.form.get('description') or '').strip()
+    db.execute('UPDATE properties SET description = ? WHERE id = ?', (description, prop_id))
+    db.commit()
+    log_activity('Updated property about', 'property', prop_id, (description or '')[:80])
+    flash('About the property saved.', 'success')
+    return redirect(url_for('admin.admin_property_detail', prop_id=prop_id))
+
+
+@admin.route('/admin/properties/<int:prop_id>/media/delete', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_property_delete_media(prop_id):
+    """Remove one photo or video from a property."""
+    db = get_db()
+    migrate_db()
+    prop = db.execute('SELECT id, photos, videos FROM properties WHERE id = ?', (prop_id,)).fetchone()
+    if not prop:
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'ok': False, 'error': 'Not found'}), 404
+        flash('Property not found.', 'danger')
+        return redirect(url_for('admin.admin_properties'))
+
+    data = request.get_json(silent=True) or {}
+    media_type = (data.get('type') or request.form.get('type') or '').strip().lower()
+    name = (data.get('name') or request.form.get('name') or '').strip()
+    if media_type not in ('photo', 'video') or not name:
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'ok': False, 'error': 'Invalid request'}), 400
+        flash('Invalid media delete request.', 'danger')
+        return redirect(url_for('admin.admin_property_detail', prop_id=prop_id))
+
+    field = 'photos' if media_type == 'photo' else 'videos'
+    raw = prop[field] or ''
+    items = [x.strip() for x in raw.split(',') if x.strip()]
+    # Match by exact name or by basename
+    base = name.split('/')[-1]
+    new_items = [x for x in items if x != name and x.split('/')[-1] != base and x != base]
+    if len(new_items) == len(items):
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'ok': False, 'error': 'Media not found'}), 404
+        flash('Media not found.', 'warning')
+        return redirect(url_for('admin.admin_property_detail', prop_id=prop_id))
+
+    new_val = ','.join(new_items) if new_items else None
+    db.execute(f'UPDATE properties SET {field} = ? WHERE id = ?', (new_val, prop_id))
+    db.commit()
+
+    # Try delete file from disk if local upload
+    try:
+        upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'properties')
+        for candidate in (name, base):
+            path = os.path.join(upload_dir, candidate)
+            if os.path.isfile(path):
+                os.remove(path)
+                break
+    except Exception:
+        pass
+
+    log_activity('Deleted property ' + media_type, 'property', prop_id, base)
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'ok': True, 'remaining': new_items})
+    flash(('Photo' if media_type == 'photo' else 'Video') + ' deleted.', 'success')
+    return redirect(url_for('admin.admin_property_detail', prop_id=prop_id))
 
 @admin.route('/admin/properties/edit/<int:prop_id>', methods=['GET', 'POST'])
 @login_required

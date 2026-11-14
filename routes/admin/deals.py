@@ -77,15 +77,30 @@ def _sync_property_status(db, deal_id, stage, property_id, purpose=None):
             (property_id,),
         )
     elif stage == 'lost':
-        other = db.execute(
-            "SELECT id FROM deals WHERE property_id = ? AND id != ? AND stage NOT IN ('closed','lost') LIMIT 1",
+        closed = db.execute(
+            "SELECT id FROM deals WHERE property_id = ? AND id != ? AND lower(IFNULL(stage,'')) = 'closed' LIMIT 1",
             (property_id, deal_id),
         ).fetchone()
-        if not other:
-            db.execute(
-                "UPDATE properties SET status = 'available' WHERE id = ? AND status IN ('under_offer','sold','rented','leased')",
-                (property_id,),
-            )
+        if closed:
+            prop = db.execute('SELECT listing_type FROM properties WHERE id = ?', (property_id,)).fetchone()
+            listing = (prop['listing_type'] if prop else 'sale') or 'sale'
+            status = _property_status_for_purpose(listing)
+            db.execute("UPDATE properties SET status = ? WHERE id = ?", (status, property_id))
+        else:
+            other = db.execute(
+                "SELECT id FROM deals WHERE property_id = ? AND id != ? AND stage NOT IN ('closed','lost') LIMIT 1",
+                (property_id, deal_id),
+            ).fetchone()
+            if other:
+                db.execute(
+                    "UPDATE properties SET status = 'under_offer' WHERE id = ?",
+                    (property_id,),
+                )
+            else:
+                db.execute(
+                    "UPDATE properties SET status = 'available' WHERE id = ?",
+                    (property_id,),
+                )
 
 
 def _deals_query(db, q='', agent_id='', stage_filter=''):

@@ -1,7 +1,7 @@
 """Admin tasks routes."""
 
 from flask import (
-    render_template, request, redirect, url_for, session, flash,
+    render_template, request, redirect, url_for, session, flash, jsonify,
     current_app, make_response
 )
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -81,22 +81,52 @@ def admin_add_task():
     clients = db.execute('SELECT id, full_name FROM clients ORDER BY full_name').fetchall()
     properties = db.execute('SELECT id, title FROM properties ORDER BY title').fetchall()
     if request.method == 'POST':
-        title = request.form.get('title', '').strip()
+        data = {}
+        if request.is_json:
+            data = request.get_json(silent=True) or {}
+        else:
+            data = request.form
+        title = (data.get('title') or '').strip()
+        wants_json = (
+            request.is_json
+            or request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+            or 'application/json' in (request.headers.get('Accept') or '')
+        )
         if not title:
+            if wants_json:
+                return jsonify({'ok': False, 'error': 'Title required.'}), 400
             flash('Title required.', 'danger')
             return redirect(url_for('admin.admin_add_task'))
-        assigned = request.form.get('assigned_to') or None
-        client_id = request.form.get('related_client_id') or None
-        prop_id = request.form.get('related_property_id') or None
-        db.execute(
+        assigned = data.get('assigned_to') or None
+        client_id = data.get('related_client_id') or None
+        prop_id = data.get('related_property_id') or None
+        description = data.get('description') or ''
+        due_date = data.get('due_date') or None
+        status = data.get('status') or 'pending'
+        priority = data.get('priority') or 'medium'
+        try:
+            assigned_i = int(assigned) if assigned not in (None, '') else None
+        except (TypeError, ValueError):
+            assigned_i = None
+        try:
+            client_i = int(client_id) if client_id not in (None, '') else None
+        except (TypeError, ValueError):
+            client_i = None
+        try:
+            prop_i = int(prop_id) if prop_id not in (None, '') else None
+        except (TypeError, ValueError):
+            prop_i = None
+        cur = db.execute(
             "INSERT INTO tasks (title, description, due_date, status, priority, assigned_to, related_client_id, related_property_id, created_by) VALUES (?,?,?,?,?,?,?,?,?)",
-            (title, request.form.get('description',''), request.form.get('due_date') or None,
-             request.form.get('status','pending'), request.form.get('priority','medium'),
-             int(assigned) if assigned else None, int(client_id) if client_id else None,
-             int(prop_id) if prop_id else None, session['user_id'])
+            (title, description, due_date, status, priority, assigned_i, client_i, prop_i, session['user_id'])
         )
         db.commit()
-        log_activity('Created task', 'task', None, title)
+        log_activity('Created task', 'task', cur.lastrowid, title)
+        if wants_json:
+            return jsonify({'ok': True, 'id': cur.lastrowid})
+        nxt = (data.get('next') or request.args.get('next') or '').strip()
+        if nxt == 'dashboard':
+            return redirect(url_for('admin.admin_dashboard'))
         return redirect(url_for('admin.admin_tasks', toast='Updated'))
     return render_template('admin_add_task.html', agents=agents, clients=clients, properties=properties)
 

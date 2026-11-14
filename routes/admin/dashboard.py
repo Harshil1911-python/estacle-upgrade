@@ -211,6 +211,12 @@ def admin_dashboard():
         (session.get('user_id'),)
     ).fetchone()
 
+    task_agents = db.execute(
+        "SELECT id, full_name FROM users WHERE role IN ('admin','agent') AND is_active=1 ORDER BY full_name"
+    ).fetchall()
+    task_clients = db.execute('SELECT id, full_name FROM clients ORDER BY full_name LIMIT 300').fetchall()
+    task_properties = db.execute('SELECT id, title FROM properties ORDER BY title LIMIT 300').fetchall()
+
     return render_template(
         'admin.html',
         stats=stats,
@@ -219,6 +225,9 @@ def admin_dashboard():
         currency=currency,
         format_money=format_money,
         current_user=current_user,
+        task_agents=task_agents,
+        task_clients=task_clients,
+        task_properties=task_properties,
     )
 
 
