@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  var VERSION = '20261112b';
+  var VERSION = '20261112c';
   var STORAGE_KEY = 'serenia_widget_state_v2';
   var POS_KEY = 'serenia_widget_pos_v1';
   var CHAT_URL = '/admin/ai/chat';
@@ -108,18 +108,22 @@
     var pos = loadPos();
     var fab = document.getElementById('serenia-fab');
     var panel = document.getElementById('serenia-panel');
-    if (fab && pos.fab) {
-      fab.style.left = pos.fab.left;
-      fab.style.top = pos.fab.top;
-      fab.style.right = 'auto';
-      fab.style.bottom = 'auto';
+    function place(el, saved) {
+      if (!el || !saved || !saved.left || !saved.top) return;
+      var left = parseInt(saved.left, 10);
+      var top = parseInt(saved.top, 10);
+      if (isNaN(left) || isNaN(top)) return;
+      var w = el.offsetWidth || 56;
+      var h = el.offsetHeight || 56;
+      left = clamp(left, 4, Math.max(4, window.innerWidth - w - 4));
+      top = clamp(top, 4, Math.max(4, window.innerHeight - h - 4));
+      el.style.left = left + 'px';
+      el.style.top = top + 'px';
+      el.style.right = 'auto';
+      el.style.bottom = 'auto';
     }
-    if (panel && pos.panel) {
-      panel.style.left = pos.panel.left;
-      panel.style.top = pos.panel.top;
-      panel.style.right = 'auto';
-      panel.style.bottom = 'auto';
-    }
+    place(fab, pos.fab);
+    place(panel, pos.panel);
   }
 
   function updateVisibility() {
@@ -223,6 +227,7 @@
   function ensureDom() {
     if (document.getElementById('serenia-fab')) {
       applySavedPositions();
+      updateVisibility();
       return;
     }
 
@@ -651,4 +656,33 @@
     });
     obs.observe(document.documentElement, { childList: true, subtree: true });
   } catch (e) {}
+
+  setInterval(function () {
+    var fab = document.getElementById('serenia-fab');
+    if (!fab) {
+      window.__sereniaWidget = false;
+      ensureDom();
+      window.__sereniaWidget = true;
+      try { renderMessages(); } catch (e) {}
+      updateVisibility();
+      return;
+    }
+    if (!isAiPage()) fab.classList.remove('hidden');
+    var r = fab.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > window.innerHeight || r.right < 0 || r.left > window.innerWidth) {
+      fab.style.left = 'auto';
+      fab.style.top = 'auto';
+      fab.style.right = '22px';
+      fab.style.bottom = '22px';
+      try {
+        var cur = loadPos();
+        delete cur.fab;
+        localStorage.setItem(POS_KEY, JSON.stringify(cur));
+      } catch (e2) {}
+    }
+  }, 2500);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) { ensureDom(); updateVisibility(); }
+  });
+  window.addEventListener('focus', function () { ensureDom(); updateVisibility(); });
 })();

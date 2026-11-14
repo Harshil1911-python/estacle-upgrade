@@ -153,7 +153,15 @@
                         <div class="fg"><label>Assigned agent</label><select name="agent_id"><option value="">— Unassigned —</option>{% for a in agents %}<option value="{{ a.id }}" {% if prop.agent_id == a.id %}selected{% endif %}>{{ a.full_name }}</option>{% endfor %}</select></div>
                         <div class="fg"><label>Seller name</label><input type="text" name="seller_name" value="{{ prop.seller_name or "" }}"></div>
                         <div class="fg"><label>Seller phone</label><input type="text" name="seller_phone" value="{{ prop.seller_phone or "" }}"></div>
-                        <div class="fg"><label>Photos (add more keeps existing)</label><input type="file" name="photos" accept="image/*" multiple></div>
+                        
+                    <p class="sec">Existing media</p>
+                    <div id="existingMedia" style="margin-bottom:14px">
+                      <div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:8px">Photos</div>
+                      <div id="editPhotoGrid" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px"></div>
+                      <div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:8px">Videos</div>
+                      <div id="editVideoGrid" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px"></div>
+                    </div>
+<div class="fg"><label>Photos (add more keeps existing)</label><input type="file" name="photos" accept="image/*" multiple></div>
                         <div class="fg s2"><label>Videos (add more)</label><input type="file" name="videos" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" multiple></div>
                     </div>
 
@@ -170,6 +178,71 @@
 <div class="toast-host" id="toastHost" aria-live="polite"></div>
 <script>
 (function(){var h=document.getElementById('toastHost'),d=document.getElementById('flash-data');if(!h||!d)return;var i=d.querySelectorAll('span[data-msg]');if(!i.length)return;var e=document.createElement('div');e.className='toast-sphere';e.textContent=i[0].getAttribute('data-msg')||'Done';h.appendChild(e);requestAnimationFrame(function(){e.classList.add('show');});setTimeout(function(){e.classList.add('hide');setTimeout(function(){e.remove();},250);},2800);})();
+</script>
+
+
+<script>
+(function(){
+  var PROP_ID = {{ prop.id }};
+  function parseList(s){
+    if (!s) return [];
+    return String(s).split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+  }
+  var photos = parseList({{ (prop.photos or '')|tojson }});
+  var videos = parseList({{ (prop.videos or '')|tojson }});
+  function urlFor(n){
+    if (!n) return '';
+    if (n.indexOf('http')===0 || n.charAt(0)==='/') return n;
+    return '/static/uploads/properties/' + n;
+  }
+  function del(type, name, el){
+    if (!confirm('Delete this ' + type + '?')) return;
+    fetch('/admin/properties/' + PROP_ID + '/media/delete', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','Accept':'application/json'},
+      body: JSON.stringify({type: type, name: name})
+    }).then(function(r){ return r.json(); }).then(function(j){
+      if (!j || !j.ok) { alert((j && j.error) || 'Failed'); return; }
+      if (el) el.remove();
+    }).catch(function(){ alert('Failed'); });
+  }
+  function render(){
+    var pg = document.getElementById('editPhotoGrid');
+    var vg = document.getElementById('editVideoGrid');
+    if (pg) {
+      if (!photos.length) pg.innerHTML = '<span style="font-size:13px;color:#94a3b8">No photos</span>';
+      else pg.innerHTML = photos.map(function(n){
+        return '<div style="position:relative;width:96px;height:96px;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0">'
+          + '<img src="'+urlFor(n)+'" style="width:100%;height:100%;object-fit:cover">'
+          + '<button type="button" data-name="'+n.replace(/"/g,'&quot;')+'" class="del-ph" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border:none;border-radius:50%;background:#b91c1c;color:#fff;cursor:pointer;font-weight:700">×</button></div>';
+      }).join('');
+      pg.querySelectorAll('.del-ph').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var name = btn.getAttribute('data-name');
+          del('photo', name, btn.parentElement);
+          photos = photos.filter(function(x){ return x !== name; });
+        });
+      });
+    }
+    if (vg) {
+      if (!videos.length) vg.innerHTML = '<span style="font-size:13px;color:#94a3b8">No videos</span>';
+      else vg.innerHTML = videos.map(function(n){
+        return '<div style="position:relative;width:160px;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;background:#0f172a">'
+          + '<video src="'+urlFor(n)+'" muted preload="metadata" style="width:100%;height:90px;object-fit:cover;display:block"></video>'
+          + '<button type="button" data-name="'+n.replace(/"/g,'&quot;')+'" class="del-vid" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border:none;border-radius:50%;background:#b91c1c;color:#fff;cursor:pointer;font-weight:700">×</button></div>';
+      }).join('');
+      vg.querySelectorAll('.del-vid').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var name = btn.getAttribute('data-name');
+          del('video', name, btn.parentElement);
+          videos = videos.filter(function(x){ return x !== name; });
+        });
+      });
+    }
+  }
+  render();
+})();
 </script>
 
 </body></html>

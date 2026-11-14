@@ -76,52 +76,10 @@
             </div>
         </div>
 
-        <div class="nav-dropdown {% if active in ['appointments', 'add_appointment'] %}open has-active{% endif %}">
-            <button type="button" class="nav-dropdown-toggle" data-tip="Appointments" onclick="this.parentElement.classList.toggle('open')">
-                <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                <span>Appointments</span>
-                <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div class="nav-dropdown-menu">
-                <a href="{{ url_for('admin.admin_appointments') }}" class="nav-subitem {% if active == 'appointments' %}active{% endif %}">All Appointments</a>
-                <a href="{{ url_for('admin.admin_add_appointment') }}" class="nav-subitem {% if active == 'add_appointment' %}active{% endif %}">Schedule</a>
-            </div>
-        </div>
-
-        <div class="nav-dropdown {% if active in ['tasks', 'add_task'] %}open has-active{% endif %}">
-            <button type="button" class="nav-dropdown-toggle" data-tip="Tasks" onclick="this.parentElement.classList.toggle('open')">
-                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                <span>Tasks</span>
-                <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div class="nav-dropdown-menu">
-                <a href="{{ url_for('admin.admin_tasks') }}" class="nav-subitem {% if active == 'tasks' %}active{% endif %}">All Tasks</a>
-                <a href="{{ url_for('admin.admin_add_task') }}" class="nav-subitem {% if active == 'add_task' %}active{% endif %}">Add Task</a>
-            </div>
-        </div>
-
-        <div class="nav-dropdown {% if active in ['documents', 'add_document'] %}open has-active{% endif %}">
-            <button type="button" class="nav-dropdown-toggle" data-tip="Documents" onclick="this.parentElement.classList.toggle('open')">
-                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <span>Documents</span>
-                <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div class="nav-dropdown-menu">
-                <a href="{{ url_for('admin.admin_documents') }}" class="nav-subitem {% if active == 'documents' %}active{% endif %}">All Documents</a>
-                <a href="{{ url_for('admin.admin_add_document') }}" class="nav-subitem {% if active == 'add_document' %}active{% endif %}">Add Document</a>
-            </div>
-        </div>
-
-        <div class="nav-dropdown {% if active == 'inquiries' %}open has-active{% endif %}">
-            <button type="button" class="nav-dropdown-toggle" data-tip="Inquiries" onclick="this.parentElement.classList.toggle('open')">
-                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                <span>Inquiries</span>
-                <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div class="nav-dropdown-menu">
-                <a href="{{ url_for('admin.admin_inquiries') }}" class="nav-subitem {% if active == 'inquiries' %}active{% endif %}">All Inquiries</a>
-            </div>
-        </div>
+        <a href="{{ url_for('admin.admin_appointments') }}" class="nav-item {% if active in ['appointments', 'add_appointment'] %}active{% endif %}" data-tip="Appointments">
+            <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Appointments</span>
+        </a>
 
         <div class="nav-dropdown {% if active == 'activity' %}open has-active{% endif %}">
             <button type="button" class="nav-dropdown-toggle" data-tip="Activity" onclick="this.parentElement.classList.toggle('open')">
@@ -151,8 +109,8 @@
     </div>
 </aside>
 <script src="{{ url_for('static', filename='js/app-nav.js') }}"></script>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/serenia-widget.css') }}?v=20261112b">
-<script src="{{ url_for('static', filename='js/serenia-widget.js') }}?v=20261112b"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/serenia-widget.css') }}?v=20261112c">
+<script src="{{ url_for('static', filename='js/serenia-widget.js') }}?v=20261112c"></script>
 
 <script>
 (function(){

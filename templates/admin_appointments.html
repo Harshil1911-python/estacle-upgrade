@@ -6,420 +6,438 @@
 <title>Estacle | Appointments</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 <style>
-.main-content { background: transparent !important; }
+.main-content { background: #f7f8fb !important; }
 .top-bar.dash-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 28px 12px !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  gap: 12px;
-  flex-wrap: wrap;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 28px 8px !important; background: transparent !important;
+  border: none !important; box-shadow: none !important; gap: 12px; flex-wrap: wrap;
 }
 .dash-top .page-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 2px;
-  letter-spacing: -0.02em;
+  font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 4px; letter-spacing: -0.02em;
 }
-.dash-top .page-subtitle { font-size: 13px; color: #64748b; margin: 0; }
+.dash-top .page-subtitle { font-size: 13px; color: #64748b; margin: 0; max-width: 520px; line-height: 1.45; }
 .top-actions { display: flex; gap: 8px; align-items: center; }
 .btn-dark {
-  height: 36px;
-  padding: 0 14px;
-  background: #0f172a;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
+  height: 36px; padding: 0 14px; background: #0f172a; color: #fff; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
 }
 .btn-dark:hover { background: #1e293b; color: #fff; }
 .btn-light {
-  height: 36px;
-  padding: 0 12px;
-  background: #fff;
-  color: #334155;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
+  height: 36px; padding: 0 12px; background: #fff; color: #334155; border: 1px solid #e2e8f0;
+  border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 6px;
 }
 .btn-light:hover { background: #f8fafc; }
 
-.page-wrap { padding: 0 28px 28px; }
+.page-wrap { padding: 8px 28px 32px; max-width: 1100px; }
 
-.ap {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 16px;
-  align-items: start;
-}
-@media (max-width: 980px) {
-  .ap { grid-template-columns: 1fr; }
-}
-
-.week-card {
+/* Calendar card */
+.cal-card {
   background: #fff;
   border: 1px solid #e8ecf1;
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: 14px;
+  padding: 18px 20px 16px;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04);
 }
 
-.week-bar {
+.cal-toolbar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  margin-bottom: 16px;
+}
+.cal-toolbar .nav {
+  display: flex; align-items: center; gap: 6px;
+}
+.cal-toolbar .nav button {
+  width: 34px; height: 34px; border: 1px solid #e2e8f0; background: #fff;
+  border-radius: 8px; cursor: pointer; font-size: 16px; color: #334155; font-family: inherit;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.cal-toolbar .nav button:hover { background: #f8fafc; }
+.cal-toolbar .month-title {
+  font-size: 16px; font-weight: 700; color: #0f172a; min-width: 140px; text-align: center;
+}
+.cal-toolbar .today-btn {
+  height: 34px; padding: 0 14px; border: 1px solid #e2e8f0; background: #fff;
+  border-radius: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;
+  font-family: inherit;
+}
+.cal-toolbar .today-btn:hover { background: #f8fafc; }
+.cal-toolbar .spacer { flex: 1; }
+.cal-toolbar select, .cal-toolbar input[type=search] {
+  height: 34px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 8px;
+  font-size: 12px; font-weight: 600; color: #334155; font-family: inherit; background: #fff;
+}
+
+/* Month grid */
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+.month-grid .dow {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 650;
+  color: #94a3b8;
+  letter-spacing: 0.04em;
+  padding: 4px 0 8px;
+  text-transform: uppercase;
+}
+.day-cell {
+  min-height: 88px;
+  background: #fafbfc;
+  border: 1.5px solid #eef1f5;
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  position: relative;
   display: flex;
+  flex-direction: column;
+}
+.day-cell:hover {
+  border-color: #cbd5e1;
+  background: #fff;
+}
+.day-cell.muted {
+  opacity: 0.45;
+  background: #f8fafc;
+}
+.day-cell.today {
+  border-color: #94a3b8;
+  background: #fff;
+}
+.day-cell.selected {
+  border-color: #0f172a;
+  background: #fff;
+  box-shadow: 0 0 0 1px #0f172a;
+}
+.day-cell .dn {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+}
+.day-cell.muted .dn { color: #94a3b8; }
+.day-cell.today .dn {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
+  justify-content: center;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #0f172a;
+  color: #fff;
+  font-size: 12px;
+}
+.day-cell .count {
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 11px;
+  font-weight: 650;
+  color: #64748b;
+}
+.day-cell .count.has {
+  color: #1e40af;
+}
+.day-cell .count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 11px;
+  font-weight: 700;
+}
+.day-cell .chips {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.day-cell .chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: #eff6ff;
+  color: #1e40af;
+}
+.day-cell .chip.visit { background: #f5f3ff; color: #5b21b6; }
+.day-cell .chip.done { background: #ecfdf5; color: #065f46; }
+.day-cell .chip.more { background: transparent; color: #64748b; padding-left: 2px; }
+
+/* Day detail panel below */
+.day-panel {
+  margin-top: 16px;
+  background: #fff;
+  border: 1px solid #e8ecf1;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+}
+.day-panel-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 20px;
   border-bottom: 1px solid #f1f5f9;
   flex-wrap: wrap;
 }
-.week-bar .nav {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.day-panel-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
 }
-.week-bar .nav button {
-  height: 32px;
-  min-width: 32px;
-  padding: 0 10px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  border-radius: 8px;
+.day-panel-head .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.day-panel-body { padding: 8px 12px 16px; }
+
+.appt-row {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: background 0.12s;
+}
+.appt-row:hover { background: #f8fafc; }
+.appt-row + .appt-row { border-top: 1px solid #f1f5f9; }
+.appt-row .time {
   font-size: 13px;
-  font-weight: 600;
-  color: #334155;
-  cursor: pointer;
-  font-family: inherit;
+  font-weight: 700;
+  color: #0f172a;
+  padding-top: 2px;
 }
-.week-bar .nav button:hover { background: #f8fafc; }
-.week-bar .label {
+.appt-row .time .dur {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.appt-row .info .title {
   font-size: 14px;
   font-weight: 650;
   color: #0f172a;
-  margin-left: 4px;
-  min-width: 180px;
+  margin: 0 0 4px;
 }
-.week-bar .meta {
+.appt-row .info .meta {
   font-size: 12px;
-  color: #94a3b8;
-}
-
-.week-scroll { overflow-x: auto; }
-.week {
-  display: grid;
-  grid-template-columns: 52px repeat(7, minmax(100px, 1fr));
-  min-width: 760px;
-}
-.week .h-time,
-.week .h-day {
-  background: #fafbfc;
-  border-bottom: 1px solid #f1f5f9;
-  border-right: 1px solid #f8fafc;
-  padding: 10px 6px;
-  text-align: center;
-}
-.week .h-day {
-  font-size: 11px;
   color: #64748b;
-  font-weight: 500;
-}
-.week .h-day .n {
-  display: block;
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-  margin-top: 2px;
-}
-.week .h-day.is-today .n {
-  width: 26px;
-  height: 26px;
-  line-height: 26px;
-  margin: 2px auto 0;
-  border-radius: 50%;
-  background: #0f172a;
-  color: #fff;
-}
-.week .t {
-  height: 44px;
-  font-size: 11px;
-  color: #94a3b8;
-  text-align: right;
-  padding: 2px 6px 0 0;
-  border-right: 1px solid #f1f5f9;
-  border-bottom: 1px solid #f8fafc;
-}
-.week .cell {
-  height: 44px;
-  border-right: 1px solid #f8fafc;
-  border-bottom: 1px solid #f8fafc;
-  position: relative;
-  background: #fff;
-}
-.week .cell:hover { background: #f8fafc; }
-.week .cell.past { background: #fcfcfd; }
-.week .cell.drop-over { background: #eef2ff; outline: 1px dashed #a5b4fc; outline-offset: -2px; }
-
-.block {
-  position: absolute;
-  left: 2px;
-  right: 2px;
-  top: 2px;
-  bottom: 2px;
-  border-radius: 6px;
-  padding: 3px 6px;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.25;
-  overflow: hidden;
-  cursor: grab;
-  user-select: none;
-  border: 1px solid transparent;
-  z-index: 2;
-}
-.block:active { cursor: grabbing; }
-.block.dragging { opacity: 0.45; }
-.block.scheduled { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
-.block.completed { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
-.block.cancelled { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-.block.no_show { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
-.block .tm { font-size: 10px; font-weight: 500; opacity: 0.8; }
-
-.side {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.side .card {
-  background: #fff;
-  border: 1px solid #e8ecf1;
-  border-radius: 12px;
-  padding: 14px;
-}
-.side .card h3 {
-  margin: 0 0 10px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #0f172a;
-}
-.m-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-.m-nav button {
-  width: 28px;
-  height: 28px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  border-radius: 6px;
-  cursor: pointer;
-  color: #334155;
-  font-family: inherit;
-}
-.m-nav span { font-size: 13px; font-weight: 650; color: #0f172a; }
-.m-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  text-align: center;
-}
-.m-grid .d0 {
-  font-size: 10px;
-  color: #94a3b8;
-  font-weight: 600;
-  padding: 4px 0;
-}
-.m-grid button {
-  height: 30px;
-  border: none;
-  background: transparent;
-  border-radius: 7px;
-  font-size: 12px;
-  color: #0f172a;
-  cursor: pointer;
-  font-family: inherit;
-  position: relative;
-}
-.m-grid button:hover:not(:disabled) { background: #f1f5f9; }
-.m-grid button.muted { color: #cbd5e1; }
-.m-grid button.past { color: #cbd5e1; cursor: not-allowed; }
-.m-grid button.sel { background: #0f172a; color: #fff; }
-.m-grid button .dot {
-  position: absolute;
-  bottom: 3px;
-  left: 50%;
-  width: 4px;
-  height: 4px;
-  margin-left: -2px;
-  border-radius: 50%;
-  background: #3b82f6;
-}
-.m-grid button.sel .dot { background: #93c5fd; }
-
-.stats-mini {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.stats-mini .s {
-  background: #f8fafc;
-  border-radius: 8px;
-  padding: 10px;
-}
-.stats-mini .s .l { font-size: 11px; color: #64748b; margin-bottom: 2px; }
-.stats-mini .s .v { font-size: 18px; font-weight: 700; color: #0f172a; }
-
-.detail-empty { font-size: 13px; color: #94a3b8; padding: 6px 0 2px; }
-.row {
-  display: grid;
-  grid-template-columns: 72px 1fr;
-  gap: 6px;
-  font-size: 13px;
-  margin-bottom: 6px;
-}
-.row .k { color: #64748b; font-weight: 600; }
-.row .v { color: #0f172a; word-break: break-word; }
-.actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 10px;
 }
-.actions a, .actions button {
-  height: 30px;
-  padding: 0 10px;
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 600;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #334155;
-  cursor: pointer;
-  font-family: inherit;
-  text-decoration: none;
+.appt-row .info .meta span {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
 }
-.actions .pri { background: #0f172a; color: #fff; border-color: #0f172a; }
-.actions .dan { color: #b91c1c; border-color: #fecaca; }
+.badge {
+  display: inline-flex; align-items: center; height: 22px; padding: 0 8px;
+  border-radius: 999px; font-size: 11px; font-weight: 650;
+}
+.badge.scheduled { background: #eef2ff; color: #3730a3; }
+.badge.completed { background: #ecfdf5; color: #065f46; }
+.badge.cancelled { background: #fef2f2; color: #991b1b; }
+.badge.no_show { background: #fff7ed; color: #9a3412; }
+.badge.type-meeting { background: #eff6ff; color: #1e40af; }
+.badge.type-property_visit { background: #f5f3ff; color: #5b21b6; }
+.badge.type-call { background: #f0f9ff; color: #0369a1; }
+.badge.type-follow_up { background: #f0fdf4; color: #166534; }
 
-.slots { margin-top: 12px; }
-.slots h4 {
-  margin: 0 0 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.appt-row .row-actions {
+  display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
 }
-.chip {
-  display: inline-flex;
-  height: 28px;
-  padding: 0 10px;
-  margin: 0 6px 6px 0;
-  border: 1px solid #e2e8f0;
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #334155;
+.appt-row .row-actions button, .appt-row .row-actions a {
+  height: 30px; padding: 0 10px; border-radius: 7px; font-size: 12px; font-weight: 600;
+  border: 1px solid #e2e8f0; background: #fff; color: #334155; cursor: pointer;
+  font-family: inherit; text-decoration: none; display: inline-flex; align-items: center;
+}
+.appt-row .row-actions .pri { background: #0f172a; color: #fff; border-color: #0f172a; }
+.appt-row .row-actions .dan { color: #b91c1c; border-color: #fecaca; }
+
+.empty-day {
+  padding: 28px 16px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (max-width: 800px) {
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+}
+.stats-bar .s {
   background: #fff;
+  border: 1px solid #e8ecf1;
+  border-radius: 14px;
+  padding: 16px 18px;
+  min-width: 0;
   cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+}
+.stats-bar .s:hover, .stats-bar .s.on {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.08);
+}
+.stats-bar .s .l {
+  font-size: 11px; font-weight: 600; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px;
+}
+.stats-bar .s .v { font-size: 26px; font-weight: 700; color: #0f172a; letter-spacing: -0.02em; }
+
+.search-results {
+  display: none;
+  margin-top: 16px;
+  background: #fff;
+  border: 1px solid #e8ecf1;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+}
+.search-results.on { display: block; }
+.search-results .sr-hd {
+  padding: 12px 16px; border-bottom: 1px solid #f1f5f9;
+  font-size: 13px; font-weight: 700; color: #0f172a;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.search-results .sr-bd { padding: 8px 12px 12px; }
+.search-results .sr-row {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: 12px; align-items: start;
+  padding: 12px 8px;
+  border-bottom: 1px solid #f8fafc;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.search-results .sr-row:hover { background: #f8fafc; }
+.search-results .sr-row:last-child { border-bottom: none; }
+.search-results .sr-time { font-size: 13px; font-weight: 700; color: #0f172a; }
+.search-results .sr-time .d { display: block; font-size: 11px; font-weight: 500; color: #94a3b8; margin-top: 2px; }
+.search-results .sr-title { font-size: 14px; font-weight: 650; color: #0f172a; margin: 0 0 4px; }
+.search-results .sr-meta { font-size: 12px; color: #64748b; display: flex; flex-wrap: wrap; gap: 8px; }
+.search-results .sr-empty { padding: 24px; text-align: center; color: #94a3b8; font-size: 13px; }
+
+.toast-host {
+  position: fixed; left: 0; right: 0; bottom: 28px; z-index: 9999;
+  display: flex; justify-content: center; pointer-events: none;
+}
+.toast-sphere {
+  pointer-events: auto; background: #0f172a; color: #fff; padding: 14px 28px;
+  border-radius: 999px; font-size: 14px; font-weight: 500;
+  box-shadow: 0 12px 40px rgba(15,23,42,0.35);
+  opacity: 0; transform: translateY(24px) scale(0.96);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  max-width: 90vw; text-align: center;
+}
+.toast-sphere.show { opacity: 1; transform: translateY(0) scale(1); }
+.toast-sphere.hide { opacity: 0; transform: translateY(16px) scale(0.96); }
+
+/* Day panel polish */
+.day-panel {
+  margin-top: 18px;
+  background: #fff;
+  border: 1px solid #e8ecf1;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.05);
+}
+.day-panel-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafbfc;
+  flex-wrap: wrap;
+}
+.day-panel-head h2 {
+  margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;
+}
+.appt-row {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 12px;
+  border-radius: 12px;
+  margin: 4px 0;
+  transition: background 0.12s;
+}
+.appt-row:hover { background: #f8fafc; }
+.appt-row .row-actions {
+  display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
+}
+.appt-row .row-actions button {
+  height: 30px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  border: 1px solid #e2e8f0; background: #fff; color: #334155; cursor: pointer;
   font-family: inherit;
 }
-.chip:hover { background: #f8fafc; }
-.chip.off { opacity: 0.4; cursor: not-allowed; text-decoration: line-through; }
+.appt-row .row-actions .pri { background: #0f172a; color: #fff; border-color: #0f172a; }
+.appt-row .row-actions .dan { color: #b91c1c; border-color: #fecaca; }
+.appt-row .row-actions .sec { background: #f8fafc; }
 
-.toast {
-  position: fixed;
-  top: 18px;
-  right: 18px;
-  z-index: 3000;
-  background: #0f172a;
-  color: #fff;
-  padding: 11px 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  opacity: 0;
-  transform: translateY(-6px);
-  transition: opacity 0.2s, transform 0.2s;
-  pointer-events: none;
+.detail-grid {
+  display: grid; grid-template-columns: 120px 1fr; gap: 10px 12px; font-size: 13px;
 }
-.toast.on { opacity: 1; transform: translateY(0); }
+.detail-grid .k { color: #64748b; font-weight: 600; }
+.detail-grid .v { color: #0f172a; font-weight: 500; word-break: break-word; }
+.mom-box {
+  margin-top: 12px; background: #f8fafc; border: 1px solid #e8ecf1;
+  border-radius: 10px; padding: 12px; font-size: 13px; color: #334155; line-height: 1.5;
+  white-space: pre-wrap;
+}
+.mom-box h4 { margin: 0 0 6px; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; }
+
 
 .modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.4);
-  z-index: 2000;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
+  display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.4); z-index: 2000;
+  align-items: center; justify-content: center; padding: 16px;
 }
 .modal.on { display: flex; }
 .modal .box {
-  background: #fff;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 440px;
-  border: 1px solid #e8ecf1;
-  overflow: hidden;
+  background: #fff; border-radius: 12px; width: 100%; max-width: 460px;
+  border: 1px solid #e8ecf1; overflow: hidden; max-height: 90vh; display: flex; flex-direction: column;
 }
 .modal .hd {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  border-bottom: 1px solid #f1f5f9;
+  display: flex; align-items: center; justify-content: space-between; padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9; flex-shrink: 0;
 }
 .modal .hd h3 { margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; }
-.modal .hd button {
-  border: none;
-  background: none;
-  font-size: 20px;
-  color: #64748b;
-  cursor: pointer;
-  line-height: 1;
-}
-.modal .bd { padding: 16px; }
-.modal label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: #475569;
-  margin-bottom: 5px;
-}
+.modal .hd button { border: none; background: none; font-size: 20px; color: #64748b; cursor: pointer; line-height: 1; }
+.modal .bd { padding: 16px; overflow: auto; }
+.modal label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 5px; }
 .modal input, .modal select, .modal textarea {
-  width: 100%;
-  height: 38px;
-  padding: 0 11px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 13px;
-  font-family: inherit;
-  color: #0f172a;
-  box-sizing: border-box;
-  margin-bottom: 12px;
+  width: 100%; height: 38px; padding: 0 11px; border: 1px solid #e2e8f0; border-radius: 8px;
+  font-size: 13px; font-family: inherit; color: #0f172a; box-sizing: border-box; margin-bottom: 12px;
 }
-.modal textarea { height: 100px; padding: 10px 11px; resize: vertical; }
-.modal .ft {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+.modal textarea { height: 88px; padding: 10px 11px; resize: vertical; }
+.modal .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal .ft { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.err { color: #b91c1c; font-size: 12px; margin: -6px 0 10px; display: none; }
+.err.on { display: block; }
+
+@media (max-width: 720px) {
+  .month-grid { gap: 4px; }
+  .day-cell { min-height: 64px; padding: 6px; }
+  .day-cell .chips { display: none; }
+  .appt-row { grid-template-columns: 60px 1fr; }
+  .appt-row .row-actions { grid-column: 1 / -1; justify-content: flex-start; }
 }
 </style>
 </head>
@@ -431,91 +449,127 @@
   <header class="top-bar dash-top">
     <div>
       <h1 class="page-title">Appointments</h1>
-      <p class="page-subtitle">Week calendar · drag to reschedule</p>
+      <p class="page-subtitle">Manage Your Appointments</p>
     </div>
     <div class="top-actions">
-      <a class="btn-dark" href="{{ url_for('admin.admin_add_appointment') }}">Schedule</a>
+      <button type="button" class="btn-dark" id="btnSchedule">+ Schedule</button>
     </div>
   </header>
 
   <div class="page-wrap">
-    <div class="ap">
-      <div class="week-card">
-        <div class="week-bar">
-          <div class="nav">
-            <button type="button" id="prevWeek" title="Previous week">‹</button>
-            <button type="button" id="todayWeek">Today</button>
-            <button type="button" id="nextWeek" title="Next week">›</button>
-            <span class="label" id="weekLabel"></span>
-          </div>
-          <span class="meta">Drag an appointment onto another slot to move it</span>
+    <div class="stats-bar">
+      <div class="s on" data-stat="" onclick="filterStat(this,'')"><div class="l">Total</div><div class="v">{{ stats.total }}</div></div>
+      <div class="s" data-stat="scheduled" onclick="filterStat(this,'scheduled')"><div class="l">Upcoming</div><div class="v">{{ stats.upcoming }}</div></div>
+      <div class="s" data-stat="completed" onclick="filterStat(this,'completed')"><div class="l">Completed</div><div class="v">{{ stats.completed }}</div></div>
+      <div class="s" data-stat="no_show" onclick="filterStat(this,'no_show')"><div class="l">No show</div><div class="v">{{ stats.no_show }}</div></div>
+    </div>
+
+    <div class="cal-card">
+      <div class="cal-toolbar">
+        <div class="nav">
+          <button type="button" id="prevMonth" title="Previous month">‹</button>
+          <span class="month-title" id="monthTitle">—</span>
+          <button type="button" id="nextMonth" title="Next month">›</button>
         </div>
-        <div class="week-scroll">
-          <div class="week" id="week"></div>
+        <button type="button" class="today-btn" id="btnToday">Today</button>
+        <div class="spacer"></div>
+        <input type="search" id="fltQ" placeholder="Search Clients">
+        <select id="fltAgent">
+          <option value="">All agents</option>
+          {% for a in agents %}
+          <option value="{{ a.id }}">{{ a.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="month-grid" id="monthGrid"></div>
+    </div>
+
+    <div class="day-panel" id="dayPanel">
+      <div class="day-panel-head">
+        <h2 id="dayPanelTitle">Select a day</h2>
+        <div class="actions">
+          <button type="button" class="btn-light" id="btnScheduleDay">+ Schedule this day</button>
         </div>
       </div>
+      <div class="day-panel-body" id="dayPanelBody">
+        <div class="empty-day">Click a day on the calendar to view its appointments.</div>
+      </div>
+    </div>
 
-      <aside class="side">
-        <div class="card">
-          <div class="stats-mini">
-            <div class="s"><div class="l">Total</div><div class="v">{{ stats.total }}</div></div>
-            <div class="s"><div class="l">Upcoming</div><div class="v">{{ stats.upcoming }}</div></div>
-            <div class="s"><div class="l">Completed</div><div class="v">{{ stats.completed }}</div></div>
-            <div class="s"><div class="l">No show</div><div class="v">{{ stats.no_show }}</div></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Month</h3>
-          <div class="m-nav">
-            <button type="button" id="prevMonth">‹</button>
-            <span id="monthLabel"></span>
-            <button type="button" id="nextMonth">›</button>
-          </div>
-          <div class="m-grid" id="month"></div>
-        </div>
-
-        <div class="card">
-          <h3 id="dayTitle">Today</h3>
-          <div id="dayBody"><div class="detail-empty">Select a day or an appointment.</div></div>
-        </div>
-      </aside>
+    <div class="search-results" id="searchResults">
+      <div class="sr-hd">
+        <span id="searchResultsTitle">Search results</span>
+        <button type="button" class="btn-light" id="clearSearch" style="height:30px">Clear</button>
+      </div>
+      <div class="sr-bd" id="searchResultsBody"></div>
     </div>
   </div>
 </main>
 </div>
 
-<div class="toast" id="toast">Updated</div>
+<div class="toast-host" id="toastHost" aria-live="polite"></div>
 
 <div class="modal" id="quickModal">
   <div class="box">
     <div class="hd">
-      <h3>Schedule appointment</h3>
+      <h3 id="quickTitle">Schedule appointment</h3>
       <button type="button" onclick="closeQuick()">&times;</button>
     </div>
     <div class="bd">
-      <form method="POST" action="{{ url_for('admin.admin_add_appointment') }}">
+      <div class="err" id="quickErr"></div>
+      <form id="quickForm">
+        <input type="hidden" name="id" id="qId" value="">
         <label>When</label>
-        <input type="text" id="qLabel" readonly style="background:#f8fafc">
-        <input type="hidden" name="appointment_date" id="qDate">
+        <div class="grid2">
+          <input type="date" name="appt_date" id="qDateOnly" required>
+          <input type="time" name="appt_time" id="qTime" value="10:00" required>
+        </div>
+        <div class="grid2">
+          <div>
+            <label>Type</label>
+            <select name="appointment_type" id="qType">
+              <option value="meeting">Client meeting</option>
+              <option value="property_visit">Property visit</option>
+              <option value="call">Call</option>
+              <option value="follow_up">Follow-up</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label>Duration</label>
+            <select name="duration_minutes" id="qDur">
+              <option value="30">30 min</option>
+              <option value="45">45 min</option>
+              <option value="60" selected>60 min</option>
+              <option value="90">90 min</option>
+              <option value="120">2 hours</option>
+            </select>
+          </div>
+        </div>
         <label>Client</label>
-        <select name="client_id">
+        <select name="client_id" id="qClient">
           <option value="">Select client</option>
           {% for c in clients %}<option value="{{ c.id }}">{{ c.full_name }}</option>{% endfor %}
         </select>
-        <label>Property</label>
-        <select name="property_id">
+        <label>Property (optional)</label>
+        <select name="property_id" id="qProp">
           <option value="">Select property</option>
           {% for p in properties %}<option value="{{ p.id }}">{{ p.title }}</option>{% endfor %}
         </select>
         <label>Agent</label>
-        <select name="agent_id">
+        <select name="agent_id" id="qAgent">
           <option value="">Select agent</option>
           {% for a in agents %}<option value="{{ a.id }}">{{ a.full_name }}</option>{% endfor %}
         </select>
+        <label>Status</label>
+        <select name="status" id="qStatus">
+          <option value="scheduled">Scheduled</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="no_show">No show</option>
+        </select>
         <label>Notes</label>
-        <textarea name="notes" placeholder="Optional"></textarea>
-        <input type="hidden" name="status" value="scheduled">
+        <textarea name="notes" id="qNotes" placeholder="Optional"></textarea>
         <div class="ft">
           <button type="button" class="btn-light" onclick="closeQuick()">Cancel</button>
           <button type="submit" class="btn-dark">Save</button>
@@ -546,259 +600,519 @@
 
 <script>
 var APPTS = {{ all_appointments_json | safe }};
-var HOURS = [8,9,10,11,12,13,14,15,16,17];
-var MAX = 6;
-var weekStart = startOfWeek(new Date());
-var monthCursor = new Date(); monthCursor.setDate(1);
-var selected = ymd(new Date());
-var dragId = null;
+if (!Array.isArray(APPTS)) APPTS = [];
 
-function pad(n){ return n < 10 ? '0'+n : ''+n; }
-function ymd(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
-function dmy(s){
-  if(!s) return '';
+var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+var TYPE_LABELS = {
+  meeting: 'Client meeting',
+  property_visit: 'Property visit',
+  call: 'Call',
+  follow_up: 'Follow-up',
+  other: 'Other'
+};
+var STATUS_LABELS = {
+  scheduled: 'Scheduled',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+  no_show: 'No show'
+};
+
+var monthCursor = new Date();
+monthCursor.setDate(1);
+monthCursor.setHours(12,0,0,0);
+var selected = ymd(new Date());
+var flt = { q: '', status: '', agent: '' };
+
+function pad(n){ return n < 10 ? '0' + n : '' + n; }
+function ymd(d){
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+function parseYmd(s){
   var p = String(s).slice(0,10).split('-');
-  return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0].slice(-2) : s;
+  if (p.length !== 3) return new Date();
+  return new Date(+p[0], +p[1]-1, +p[2], 12, 0, 0);
 }
 function dmyLong(s){
-  if(!s) return '';
-  var p = String(s).slice(0,10).split('-');
-  return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : s;
+  var d = parseYmd(s);
+  var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  return days[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + ', ' + d.getFullYear();
 }
 function tm(s){
-  if(!s) return '';
-  var t = String(s).replace(' ','T');
-  return t.indexOf('T')>=0 ? t.split('T')[1].slice(0,5) : '';
-}
-function startOfWeek(d){
-  var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  var day = x.getDay();
-  x.setDate(x.getDate() + (day===0 ? -6 : 1-day));
-  return x;
-}
-function addDays(d,n){ var x=new Date(d); x.setDate(x.getDate()+n); return x; }
-function isPast(ds){ return ds < ymd(new Date()); }
-function onDay(ds){
-  return APPTS.filter(function(a){ return String(a.appointment_date||'').slice(0,10)===ds; })
-    .sort(function(a,b){ return String(a.appointment_date).localeCompare(String(b.appointment_date)); });
-}
-function hourOf(a){
-  var t = tm(a.appointment_date);
-  return t ? parseInt(t.split(':')[0],10) : null;
+  if (!s) return '';
+  var t = String(s).replace(' ', 'T');
+  return t.indexOf('T') >= 0 ? t.split('T')[1].slice(0,5) : '';
 }
 function esc(s){
-  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function toast(msg){
-  var el = document.getElementById('toast');
+  var host = document.getElementById('toastHost');
+  if (!host) return;
+  var el = document.createElement('div');
+  el.className = 'toast-sphere';
   el.textContent = msg || 'Updated';
-  el.classList.add('on');
-  setTimeout(function(){ el.classList.remove('on'); }, 2000);
+  host.innerHTML = '';
+  host.appendChild(el);
+  requestAnimationFrame(function(){ el.classList.add('show'); });
+  setTimeout(function(){
+    el.classList.add('hide');
+    el.classList.remove('show');
+    setTimeout(function(){ el.remove(); }, 300);
+  }, 2800);
+}
+function durationOf(a){
+  var d = parseInt(a.duration_minutes, 10);
+  return (d && d > 0) ? d : 60;
 }
 
-function renderWeek(){
-  var days = [];
-  for(var i=0;i<7;i++) days.push(addDays(weekStart,i));
-  document.getElementById('weekLabel').textContent = dmyLong(ymd(days[0]))+' – '+dmyLong(ymd(days[6]));
-  var today = ymd(new Date());
-  var html = '<div class="h-time"></div>';
-  var names = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  days.forEach(function(d,i){
-    var ds = ymd(d);
-    html += '<div class="h-day'+(ds===today?' is-today':'')+'">'+names[i]+'<span class="n">'+d.getDate()+'</span></div>';
+function apptPass(a){
+  if (flt.q) {
+    var hay = ((a.client_name||'') + ' ' + (a.property_title||'') + ' ' + (a.agent_name||'') + ' ' + (a.notes||'')).toLowerCase();
+    if (hay.indexOf(flt.q.toLowerCase()) < 0) return false;
+  }
+  if (flt.status && a.status !== flt.status) return false;
+  if (flt.agent && String(a.agent_id) !== String(flt.agent)) return false;
+  return true;
+}
+
+function onDay(ds){
+  return APPTS.filter(function(a){
+    return String(a.appointment_date || '').slice(0,10) === ds && apptPass(a);
+  }).sort(function(a,b){
+    return String(a.appointment_date).localeCompare(String(b.appointment_date));
   });
-  HOURS.forEach(function(h){
-    html += '<div class="t">'+pad(h)+':00</div>';
-    days.forEach(function(d){
-      var ds = ymd(d);
-      var past = isPast(ds);
-      html += '<div class="cell'+(past?' past':'')+'" data-date="'+ds+'" data-hour="'+h+'"'
-        +' ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)"'
-        +' onclick="onCellClick(\''+ds+'\','+h+')">';
-      onDay(ds).forEach(function(a){
-        if(hourOf(a)!==h) return;
-        var st = a.status || 'scheduled';
-        var title = a.client_name || a.property_title || 'Appointment';
-        html += '<div class="block '+st+'" draggable="true" data-id="'+a.id+'"'
-          +' ondragstart="onDragStart(event)" ondragend="onDragEnd(event)"'
-          +' onclick="event.stopPropagation();selectAppt('+a.id+')">'
-          +'<div class="tm">'+tm(a.appointment_date)+'</div>'+esc(String(title).slice(0,16))
-          +'</div>';
-      });
-      html += '</div>';
-    });
-  });
-  document.getElementById('week').innerHTML = html;
+}
+
+function countOnDay(ds){
+  return onDay(ds).length;
+}
+
+function filterStat(el, st){
+  document.querySelectorAll('.stats-bar .s').forEach(function(x){ x.classList.remove('on'); });
+  if (el) el.classList.add('on');
+  flt.status = st || '';
+  renderMonth();
+  renderDayPanel();
 }
 
 function renderMonth(){
-  var y = monthCursor.getFullYear(), m = monthCursor.getMonth();
-  document.getElementById('monthLabel').textContent =
-    ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m]+' '+y;
-  var html = '';
-  ['S','M','T','W','T','F','S'].forEach(function(x){ html += '<div class="d0">'+x+'</div>'; });
-  var first = new Date(y,m,1), start = first.getDay(), dim = new Date(y,m+1,0).getDate();
-  var prevDim = new Date(y,m,0).getDate();
+  var y = monthCursor.getFullYear();
+  var m = monthCursor.getMonth();
+  document.getElementById('monthTitle').textContent = MONTHS[m] + ' ' + y;
+
+  // Monday-first calendar
+  var first = new Date(y, m, 1, 12, 0, 0);
+  var startDow = (first.getDay() + 6) % 7; // 0=Mon
+  var dim = new Date(y, m + 1, 0).getDate();
+  var prevDim = new Date(y, m, 0).getDate();
+
   var cells = [];
-  for(var i=0;i<start;i++) cells.push({d:prevDim-start+1+i, o:1, y:m?y:y-1, m:m?m-1:11});
-  for(var d=1;d<=dim;d++) cells.push({d:d, o:0, y:y, m:m});
-  while(cells.length%7) cells.push({d:cells.length-(start+dim)+1, o:1, y:m===11?y+1:y, m:m===11?0:m+1});
-  cells.forEach(function(c){
-    var ds = c.y+'-'+pad(c.m+1)+'-'+pad(c.d);
-    var cls = '';
-    if(c.o) cls += ' muted';
-    if(isPast(ds)) cls += ' past';
-    if(ds===selected) cls += ' sel';
-    html += '<button type="button" class="'+cls.trim()+'" '+(isPast(ds)?'disabled':'')+' onclick="pickDay(\''+ds+'\')">'+c.d;
-    if(!c.o && onDay(ds).length) html += '<span class="dot"></span>';
-    html += '</button>';
-  });
-  document.getElementById('month').innerHTML = html;
-}
+  for (var i = 0; i < startDow; i++) {
+    var d = prevDim - startDow + 1 + i;
+    var py = m === 0 ? y - 1 : y;
+    var pm = m === 0 ? 11 : m - 1;
+    cells.push({ d: d, muted: true, y: py, m: pm });
+  }
+  for (var d = 1; d <= dim; d++) {
+    cells.push({ d: d, muted: false, y: y, m: m });
+  }
+  while (cells.length % 7 !== 0 || cells.length < 42) {
+    var n = cells.length - (startDow + dim) + 1;
+    var ny = m === 11 ? y + 1 : y;
+    var nm = m === 11 ? 0 : m + 1;
+    // recount trailing
+    var trail = cells.length - startDow - dim + 1;
+    cells.push({ d: trail, muted: true, y: ny, m: nm });
+    if (cells.length >= 42) break;
+  }
+  // fix trailing day numbers
+  var trailStart = 1;
+  for (var i = startDow + dim; i < cells.length; i++) {
+    cells[i].d = trailStart++;
+  }
 
-function pickDay(ds){
-  if(isPast(ds)) return;
-  selected = ds;
-  weekStart = startOfWeek(new Date(ds+'T12:00:00'));
-  renderWeek();
-  renderMonth();
-  renderDay(ds);
-}
-
-function selectAppt(id){
-  var a = APPTS.find(function(x){ return x.id===id; });
-  if(!a) return;
-  selected = String(a.appointment_date||'').slice(0,10);
-  renderWeek();
-  renderMonth();
-  renderDay(selected, id);
-}
-
-function renderDay(ds, focusId){
-  document.getElementById('dayTitle').textContent = dmyLong(ds);
-  var list = onDay(ds);
+  var today = ymd(new Date());
   var html = '';
-  if(!list.length){
-    html = '<div class="detail-empty">No appointments this day.</div>';
-  } else {
-    list.forEach(function(a){
-      var hi = focusId && a.id===focusId;
-      html += '<div style="padding:8px 0;border-bottom:1px solid #f1f5f9'+(hi?';background:#f8fafc;margin:0 -6px;padding:8px 6px;border-radius:8px':'')+'">';
-      html += '<div class="row"><div class="k">Time</div><div class="v">'+tm(a.appointment_date)+' · '+dmy(a.appointment_date)+'</div></div>';
-      html += '<div class="row"><div class="k">Client</div><div class="v">'+esc(a.client_name||'—')+'</div></div>';
-      html += '<div class="row"><div class="k">Property</div><div class="v">'+esc(a.property_title||'—')+'</div></div>';
-      html += '<div class="row"><div class="k">Agent</div><div class="v">'+esc(a.agent_name||'—')+'</div></div>';
-      html += '<div class="row"><div class="k">Status</div><div class="v">'+esc((a.status||'').replace('_',' '))+'</div></div>';
-      if(a.notes) html += '<div class="row"><div class="k">Notes</div><div class="v">'+esc(a.notes)+'</div></div>';
-      if(a.minutes_of_meeting) html += '<div class="row"><div class="k">Minutes</div><div class="v">'+esc(a.minutes_of_meeting)+'</div></div>';
-      html += '<div class="actions">';
-      html += '<a href="/admin/appointments/'+a.id+'/edit">Edit</a>';
-      if((a.status||'')!=='completed') html += '<button type="button" class="pri" onclick="openMom('+a.id+')">Complete</button>';
-      html += '<form method="POST" action="/admin/appointments/'+a.id+'/delete" style="margin:0" onsubmit="return confirm(\'Remove this appointment?\');"><button type="submit" class="dan">Delete</button></form>';
-      html += '</div></div>';
-    });
+  DOW.forEach(function(x){ html += '<div class="dow">' + x + '</div>'; });
+
+  cells.forEach(function(c){
+    var ds = c.y + '-' + pad(c.m + 1) + '-' + pad(c.d);
+    var list = c.muted ? [] : onDay(ds);
+    var cnt = list.length;
+    var cls = 'day-cell';
+    if (c.muted) cls += ' muted';
+    if (ds === today) cls += ' today';
+    if (ds === selected) cls += ' selected';
+
+    html += '<div class="' + cls + '" data-date="' + ds + '" onclick="selectDay(\'' + ds + '\')">';
+    html += '<div class="dn">' + c.d + '</div>';
+
+    if (!c.muted && cnt > 0) {
+      html += '<div class="chips">';
+      list.slice(0, 2).forEach(function(a){
+        var chipCls = 'chip';
+        if ((a.appointment_type || '') === 'property_visit') chipCls += ' visit';
+        if (a.status === 'completed') chipCls += ' done';
+        var label = tm(a.appointment_date) + ' ' + (a.client_name || 'Appt');
+        html += '<div class="' + chipCls + '">' + esc(label.slice(0, 18)) + '</div>';
+      });
+      if (cnt > 2) html += '<div class="chip more">+' + (cnt - 2) + ' more</div>';
+      html += '</div>';
+      html += '<div class="count has"><span class="count-badge">' + cnt + '</span> appointment' + (cnt === 1 ? '' : 's') + '</div>';
+    } else if (!c.muted) {
+      html += '<div class="count">No appointments</div>';
+    }
+    html += '</div>';
+  });
+
+  document.getElementById('monthGrid').innerHTML = html;
+}
+
+function selectDay(ds){
+  selected = ds;
+  var d = parseYmd(ds);
+  if (d.getMonth() !== monthCursor.getMonth() || d.getFullYear() !== monthCursor.getFullYear()) {
+    monthCursor = new Date(d.getFullYear(), d.getMonth(), 1, 12, 0, 0);
   }
-  html += '<div class="slots"><h4>Open slots</h4>';
-  if(isPast(ds)){
-    html += '<div class="detail-empty">Past date</div>';
-  } else if(list.length >= MAX){
-    html += '<div class="detail-empty">Fully booked</div>';
-  } else {
-    HOURS.forEach(function(h){
-      var taken = list.some(function(a){ return hourOf(a)===h; });
-      if(taken) html += '<button type="button" class="chip off" disabled>'+pad(h)+':00</button>';
-      else html += '<button type="button" class="chip" onclick="openQuick(\''+ds+'\','+h+')">'+pad(h)+':00</button>';
-    });
+  renderMonth();
+  renderDayPanel();
+  var panel = document.getElementById('dayPanel');
+  if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function renderDayPanel(){
+  document.getElementById('dayPanelTitle').textContent = dmyLong(selected);
+  var list = onDay(selected);
+  var body = document.getElementById('dayPanelBody');
+
+  if (!list.length) {
+    body.innerHTML = '<div class="empty-day">No appointments on this day. Click “Schedule this day” to add one.</div>';
+    return;
   }
-  html += '</div>';
-  document.getElementById('dayBody').innerHTML = html;
+
+  var html = '';
+  list.forEach(function(a){
+    var st = a.status || 'scheduled';
+    var typ = a.appointment_type || 'meeting';
+    html += '<div class="appt-row">';
+    html += '<div class="time">' + esc(tm(a.appointment_date) || '—');
+    html += '<span class="dur">' + durationOf(a) + ' min</span></div>';
+    html += '<div class="info">';
+    html += '<div class="title">' + esc(a.client_name || a.property_title || 'Appointment') + '</div>';
+    html += '<div class="meta">';
+    html += '<span class="badge ' + esc(st) + '">' + esc(STATUS_LABELS[st] || st) + '</span>';
+    html += '<span class="badge type-' + esc(typ) + '">' + esc(TYPE_LABELS[typ] || typ) + '</span>';
+    if (a.agent_name) html += '<span>' + esc(a.agent_name) + '</span>';
+    if (a.property_title) html += '<span>' + esc(a.property_title) + '</span>';
+    html += '</div>';
+    if (a.notes) html += '<div class="meta" style="margin-top:4px">' + esc(a.notes) + '</div>';
+    html += '</div>';
+    html += '<div class="row-actions">';
+    html += '<button type="button" class="sec" onclick="showDetails(' + a.id + ')">Details</button>';
+    html += '<button type="button" class="pri" onclick="editAppt(' + a.id + ')">Edit</button>';
+    if (st === 'scheduled') {
+      html += '<button type="button" onclick="setStatus(' + a.id + ',\'completed\')">Complete</button>';
+      html += '<button type="button" onclick="openMom(' + a.id + ')">Minutes</button>';
+      html += '<button type="button" onclick="setStatus(' + a.id + ',\'no_show\')">No-show</button>';
+      html += '<button type="button" onclick="setStatus(' + a.id + ',\'cancelled\')">Cancel</button>';
+    }
+    html += '<button type="button" class="dan" onclick="deleteAppt(' + a.id + ')">Delete</button>';
+    html += '</div></div>';
+  });
+  body.innerHTML = html;
 }
 
-function onCellClick(ds,h){
-  if(isPast(ds)) return;
-  pickDay(ds);
-  var taken = onDay(ds).some(function(a){ return hourOf(a)===h; });
-  if(!taken && onDay(ds).length < MAX) openQuick(ds,h);
-}
-
-function onDragStart(e){
-  dragId = parseInt(e.currentTarget.getAttribute('data-id'),10);
-  e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', String(dragId));
-}
-function onDragEnd(e){
-  e.currentTarget.classList.remove('dragging');
-  dragId = null;
-  document.querySelectorAll('.cell.drop-over').forEach(function(c){ c.classList.remove('drop-over'); });
-}
-function onDragOver(e){
-  e.preventDefault();
-  e.currentTarget.classList.add('drop-over');
-}
-function onDragLeave(e){
-  e.currentTarget.classList.remove('drop-over');
-}
-function onDrop(e){
-  e.preventDefault();
-  e.currentTarget.classList.remove('drop-over');
-  var cell = e.currentTarget;
-  var ds = cell.getAttribute('data-date');
-  var h = parseInt(cell.getAttribute('data-hour'),10);
-  var id = dragId || parseInt(e.dataTransfer.getData('text/plain'),10);
-  if(!id || isPast(ds)) return;
-  var conflict = onDay(ds).some(function(a){ return a.id!==id && hourOf(a)===h; });
-  if(conflict){ toast('Slot taken'); return; }
-  var newDt = ds+'T'+pad(h)+':00';
-  fetch('/admin/appointments/'+id+'/reschedule', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({appointment_date: newDt})
-  }).then(function(r){ return r.json(); }).then(function(res){
-    if(!res.ok){ toast('Could not move'); return; }
-    var a = APPTS.find(function(x){ return x.id===id; });
-    if(a) a.appointment_date = newDt;
-    selected = ds;
-    renderWeek();
-    renderMonth();
-    renderDay(ds, id);
-    toast('Updated');
-  }).catch(function(){ toast('Could not move'); });
-}
-
-function openQuick(ds,h){
-  document.getElementById('qLabel').value = dmyLong(ds)+' · '+pad(h)+':00';
-  document.getElementById('qDate').value = ds+'T'+pad(h)+':00';
+function openQuick(opts){
+  opts = opts || {};
+  document.getElementById('quickErr').classList.remove('on');
+  document.getElementById('quickTitle').textContent = opts.id ? 'Edit appointment' : 'Schedule appointment';
+  document.getElementById('qId').value = opts.id || '';
+  document.getElementById('qDateOnly').value = opts.date || selected || ymd(new Date());
+  document.getElementById('qTime').value = opts.time || '10:00';
+  document.getElementById('qType').value = opts.type || 'meeting';
+  document.getElementById('qDur').value = opts.duration || 60;
+  document.getElementById('qClient').value = opts.client_id || '';
+  document.getElementById('qProp').value = opts.property_id || '';
+  document.getElementById('qAgent').value = opts.agent_id || '';
+  document.getElementById('qStatus').value = opts.status || 'scheduled';
+  document.getElementById('qNotes').value = opts.notes || '';
   document.getElementById('quickModal').classList.add('on');
 }
 function closeQuick(){ document.getElementById('quickModal').classList.remove('on'); }
+
+
+function showDetails(id){
+  var a = APPTS.find(function(x){ return x.id === id; });
+  if (!a) {
+    // try API
+    fetch('/admin/appointments/api/' + id, { credentials: 'same-origin' })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j && j.ok && j.appointment) renderDetails(j.appointment);
+        else toast('Not found');
+      }).catch(function(){ toast('Could not load details'); });
+    return;
+  }
+  renderDetails(a);
+}
+function renderDetails(a){
+  var st = a.status || 'scheduled';
+  var typ = a.appointment_type || 'meeting';
+  var html = '<div class="detail-grid">';
+  html += '<div class="k">Client</div><div class="v">' + esc(a.client_name || '—') + '</div>';
+  html += '<div class="k">When</div><div class="v">' + esc(String(a.appointment_date || '')) + '</div>';
+  html += '<div class="k">Duration</div><div class="v">' + durationOf(a) + ' min</div>';
+  html += '<div class="k">Type</div><div class="v">' + esc(TYPE_LABELS[typ] || typ) + '</div>';
+  html += '<div class="k">Status</div><div class="v"><span class="badge ' + esc(st) + '">' + esc(STATUS_LABELS[st] || st) + '</span></div>';
+  html += '<div class="k">Agent</div><div class="v">' + esc(a.agent_name || '—') + '</div>';
+  html += '<div class="k">Property</div><div class="v">' + esc(a.property_title || '—') + '</div>';
+  if (a.notes) html += '<div class="k">Notes</div><div class="v">' + esc(a.notes) + '</div>';
+  html += '</div>';
+  if (a.minutes_of_meeting) {
+    html += '<div class="mom-box"><h4>Minutes of meeting</h4>' + esc(a.minutes_of_meeting) + '</div>';
+  } else if (st === 'completed') {
+    html += '<div class="mom-box"><h4>Minutes of meeting</h4><em style="color:#94a3b8">No minutes recorded.</em></div>';
+  }
+  html += '<div class="ft" style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">';
+  html += '<button type="button" class="btn-light" onclick="closeDetails()">Close</button>';
+  html += '<button type="button" class="btn-dark" onclick="closeDetails();editAppt(' + a.id + ')">Edit</button>';
+  if (st === 'completed' && !a.minutes_of_meeting) {
+    html += '<button type="button" class="btn-dark" onclick="closeDetails();openMom(' + a.id + ')">Add minutes</button>';
+  }
+  html += '</div>';
+  document.getElementById('detailBody').innerHTML = html;
+  document.getElementById('detailModal').classList.add('on');
+}
+function closeDetails(){
+  var m = document.getElementById('detailModal');
+  if (m) m.classList.remove('on');
+}
+
+document.getElementById('btnSchedule').onclick = function(){ openQuick({}); };
+document.getElementById('btnScheduleDay').onclick = function(){ openQuick({ date: selected, time: '10:00' }); };
+
+document.getElementById('prevMonth').onclick = function(){
+  monthCursor.setMonth(monthCursor.getMonth() - 1);
+  renderMonth();
+};
+document.getElementById('nextMonth').onclick = function(){
+  monthCursor.setMonth(monthCursor.getMonth() + 1);
+  renderMonth();
+};
+document.getElementById('btnToday').onclick = function(){
+  var now = new Date();
+  monthCursor = new Date(now.getFullYear(), now.getMonth(), 1, 12, 0, 0);
+  selected = ymd(now);
+  renderMonth();
+  renderDayPanel();
+};
+
+document.getElementById('fltQ').addEventListener('input', function(){
+  flt.q = this.value.trim();
+  renderMonth();
+  renderDayPanel();
+  renderSearchResults();
+});
+document.getElementById('clearSearch') && document.getElementById('clearSearch').addEventListener('click', function(){
+  var fq = document.getElementById('fltQ');
+  if (fq) fq.value = '';
+  flt.q = '';
+  renderMonth();
+  renderDayPanel();
+  renderSearchResults();
+});
+document.getElementById('fltAgent').addEventListener('change', function(){
+  flt.agent = this.value;
+  renderMonth();
+  renderDayPanel();
+});
+
+document.getElementById('quickForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  var dateOnly = document.getElementById('qDateOnly').value;
+  var time = document.getElementById('qTime').value || '10:00';
+  var appointment_date = dateOnly + 'T' + time;
+  var id = document.getElementById('qId').value;
+  var payload = {
+    appointment_date: appointment_date,
+    appointment_type: document.getElementById('qType').value,
+    duration_minutes: document.getElementById('qDur').value,
+    client_id: document.getElementById('qClient').value || null,
+    property_id: document.getElementById('qProp').value || null,
+    agent_id: document.getElementById('qAgent').value || null,
+    status: document.getElementById('qStatus').value,
+    notes: document.getElementById('qNotes').value
+  };
+  var url = id ? '/admin/appointments/' + id + '/edit' : '/admin/appointments/add';
+  fetch(url, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  }).then(function(r){
+    return r.json().then(function(j){ return { status: r.status, j: j }; });
+  }).then(function(res){
+    if (!res.j || !res.j.ok) {
+      var err = document.getElementById('quickErr');
+      err.textContent = (res.j && res.j.error) || 'Save failed';
+      err.classList.add('on');
+      return;
+    }
+    closeQuick();
+    toast(id ? 'Updated' : 'Scheduled');
+    return fetch('/admin/appointments/api/list', { credentials: 'same-origin' })
+      .then(function(r){ return r.json(); });
+  }).then(function(data){
+    if (data && data.ok) {
+      APPTS = data.appointments || [];
+      if (dateOnly) selected = dateOnly;
+      renderMonth();
+      renderDayPanel();
+    }
+  }).catch(function(){
+    // fallback full reload
+    location.href = '/admin/appointments?toast=Updated';
+  });
+});
+
+function editAppt(id){
+  var a = APPTS.find(function(x){ return x.id === id; });
+  if (!a) return;
+  var dt = String(a.appointment_date || '').replace(' ', 'T');
+  openQuick({
+    id: a.id,
+    date: dt.slice(0,10),
+    time: tm(dt) || '10:00',
+    type: a.appointment_type || 'meeting',
+    duration: a.duration_minutes || 60,
+    client_id: a.client_id || '',
+    property_id: a.property_id || '',
+    agent_id: a.agent_id || '',
+    status: a.status || 'scheduled',
+    notes: a.notes || ''
+  });
+}
+
+function setStatus(id, status){
+  fetch('/admin/appointments/' + id + '/status', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify({ status: status })
+  }).then(function(r){ return r.json(); }).then(function(j){
+    if (!j.ok) { toast(j.error || 'Failed'); return; }
+    var a = APPTS.find(function(x){ return x.id === id; });
+    if (a) a.status = status;
+    toast('Status updated');
+    renderMonth();
+    renderDayPanel();
+  }).catch(function(){ toast('Could not update status'); });
+}
+
+function deleteAppt(id){
+  if (!confirm('Delete this appointment?')) return;
+  fetch('/admin/appointments/' + id + '/delete', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  }).then(function(r){ return r.json(); }).then(function(j){
+    if (!j.ok) { toast(j.error || 'Failed'); return; }
+    APPTS = APPTS.filter(function(x){ return x.id !== id; });
+    toast('Deleted');
+    renderMonth();
+    renderDayPanel();
+  });
+}
+
 function openMom(id){
-  document.getElementById('momForm').action = '/admin/appointments/'+id+'/minutes';
+  document.getElementById('momForm').action = '/admin/appointments/' + id + '/minutes';
   document.getElementById('momText').value = '';
   document.getElementById('momModal').classList.add('on');
 }
 function closeMom(){ document.getElementById('momModal').classList.remove('on'); }
 
-document.getElementById('prevWeek').onclick = function(){ weekStart = addDays(weekStart,-7); renderWeek(); };
-document.getElementById('nextWeek').onclick = function(){ weekStart = addDays(weekStart,7); renderWeek(); };
-document.getElementById('todayWeek').onclick = function(){
-  weekStart = startOfWeek(new Date());
-  selected = ymd(new Date());
-  renderWeek(); renderMonth(); renderDay(selected);
-};
-document.getElementById('prevMonth').onclick = function(){ monthCursor.setMonth(monthCursor.getMonth()-1); renderMonth(); };
-document.getElementById('nextMonth').onclick = function(){ monthCursor.setMonth(monthCursor.getMonth()+1); renderMonth(); };
-
-document.getElementById('quickModal').addEventListener('click', function(e){ if(e.target===this) closeQuick(); });
-document.getElementById('momModal').addEventListener('click', function(e){ if(e.target===this) closeMom(); });
+document.getElementById('quickModal').addEventListener('click', function(e){
+  if (e.target === this) closeQuick();
+});
+document.getElementById('momModal').addEventListener('click', function(e){
+  if (e.target === this) closeMom();
+});
+var dm = document.getElementById('detailModal');
+if (dm) dm.addEventListener('click', function(e){ if (e.target === this) closeDetails(); });
 
 {% if toast %}
 toast({{ toast|tojson }});
 {% endif %}
 
-renderWeek();
-renderMonth();
-renderDay(selected);
+
+function renderSearchResults(){
+  var box = document.getElementById('searchResults');
+  var body = document.getElementById('searchResultsBody');
+  var title = document.getElementById('searchResultsTitle');
+  if (!box || !body) return;
+  if (!flt.q) {
+    box.classList.remove('on');
+    body.innerHTML = '';
+    return;
+  }
+  var list = APPTS.filter(function(a){ return apptPass(a); })
+    .sort(function(a,b){ return String(b.appointment_date||'').localeCompare(String(a.appointment_date||'')); });
+  title.textContent = list.length + ' result' + (list.length === 1 ? '' : 's') + ' for “' + flt.q + '”';
+  if (!list.length) {
+    body.innerHTML = '<div class="sr-empty">No appointments match your search.</div>';
+    box.classList.add('on');
+    return;
+  }
+  var html = '';
+  list.forEach(function(a){
+    var st = a.status || 'scheduled';
+    var typ = a.appointment_type || 'meeting';
+    var ds = String(a.appointment_date||'').slice(0,10);
+    html += '<div class="sr-row" onclick="selectDay(\'' + ds + '\'); document.getElementById(\'searchResults\').scrollIntoView({behavior:\'smooth\',block:\'nearest\'});">';
+    html += '<div class="sr-time">' + esc(tm(a.appointment_date)||'—') + '<span class="d">' + esc(ds) + '</span></div>';
+    html += '<div><div class="sr-title">' + esc(a.client_name || a.property_title || 'Appointment') + '</div>';
+    html += '<div class="sr-meta">';
+    html += '<span class="badge ' + esc(st) + '">' + esc(STATUS_LABELS[st]||st) + '</span>';
+    html += '<span class="badge type-' + esc(typ) + '">' + esc(TYPE_LABELS[typ]||typ) + '</span>';
+    if (a.agent_name) html += '<span>' + esc(a.agent_name) + '</span>';
+    if (a.property_title) html += '<span>' + esc(a.property_title) + '</span>';
+    if (a.notes) html += '<span>' + esc(String(a.notes).slice(0,60)) + '</span>';
+    html += '</div></div>';
+    html += '<div class="row-actions"><button type="button" class="sec" onclick="event.stopPropagation();showDetails(' + a.id + ')">Details</button></div>';
+    html += '</div>';
+  });
+  body.innerHTML = html;
+  box.classList.add('on');
+}
+
+try {
+  renderMonth();
+  renderDayPanel();
+} catch (err) {
+  console.error(err);
+  document.getElementById('monthGrid').innerHTML =
+    '<div style="padding:24px;color:#b91c1c">Calendar failed to load. Please refresh.</div>';
+}
 </script>
+
+<div class="modal" id="detailModal">
+  <div class="box" style="max-width:520px">
+    <div class="hd">
+      <h3>Appointment details</h3>
+      <button type="button" onclick="closeDetails()">&times;</button>
+    </div>
+    <div class="bd" id="detailBody"></div>
+  </div>
+</div>
+
 </body>
 </html>
